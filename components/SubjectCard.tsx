@@ -1,6 +1,5 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { createPortal } from 'react-dom';
 import { SubjectData, SubjectStatus, Status, ChapterStat } from '../types';
 
 interface ChapterRowProps {
@@ -37,35 +36,12 @@ interface SubjectCardProps {
 }
 
 export const SubjectCard: React.FC<SubjectCardProps> = ({ subject, isOffline = false }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
   const [showQuestionTable, setShowQuestionTable] = useState(false);
   const [activeFilter, setActiveFilter] = useState<'All' | Status>('All');
   const [activeChapterFilter, setActiveChapterFilter] = useState<string | null>(null);
-  const [mounted, setMounted] = useState(false);
-  const cardRef = useRef<HTMLDivElement>(null);
   
   // Ref for auto-scrolling to table
   const tableContainerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  // Custom styling based on subject status for visual variety
-  // Master UI: Square Icon with Borders
-  let iconBg = 'bg-slate-50 text-slate-500 border border-slate-200';
-  let borderColor = 'border-slate-100';
-  
-  if (subject.name === 'Biology') {
-      iconBg = 'bg-red-50 text-red-600 border border-red-100';
-      borderColor = isExpanded ? 'border-l-4 border-l-ref-red' : '';
-  } else if (subject.name === 'Physics') {
-      iconBg = 'bg-yellow-50 text-yellow-600 border border-yellow-100';
-      borderColor = isExpanded ? 'border-l-4 border-l-ref-yellow' : '';
-  } else if (subject.name === 'Chemistry') {
-      iconBg = 'bg-emerald-50 text-emerald-600 border border-emerald-100';
-      borderColor = isExpanded ? 'border-l-4 border-l-ref-green' : '';
-  }
 
   const getResultColor = (result: Status) => {
       switch(result) {
@@ -156,27 +132,9 @@ export const SubjectCard: React.FC<SubjectCardProps> = ({ subject, isOffline = f
     return parts.join(' ');
   };
 
-  const getAvgTime = (totalTimeStr: string, count: number) => {
-    if (count === 0) return '-';
-    const totalSeconds = parseTimeToSeconds(totalTimeStr);
-    const avgSeconds = totalSeconds / count;
-    return formatSeconds(avgSeconds);
-  };
-
-  // Calculate percentages for bars
-  const totalTimeSeconds = parseTimeToSeconds(subject.timeSpent) || 1;
-  const correctTimeSeconds = parseTimeToSeconds(subject.timeBreakdown.correct);
-  const incorrectTimeSeconds = parseTimeToSeconds(subject.timeBreakdown.incorrect);
-  const unattemptedTimeSeconds = parseTimeToSeconds(subject.timeBreakdown.unattempted);
-  
-  const correctTimePercent = Math.round((correctTimeSeconds / totalTimeSeconds) * 100);
-  const incorrectTimePercent = Math.round((incorrectTimeSeconds / totalTimeSeconds) * 100);
-  const unattemptedTimePercent = Math.round((unattemptedTimeSeconds / totalTimeSeconds) * 100);
-
   // New calculation for Attempt Rate
   const attemptedCount = displayCounts.total - displayCounts.unattempted;
   const attemptRate = displayCounts.total > 0 ? Math.round((attemptedCount / displayCounts.total) * 100) : 0;
-
 
   const handleChapterSelect = (chapterName: string) => {
       if (activeChapterFilter === chapterName) {
@@ -190,81 +148,56 @@ export const SubjectCard: React.FC<SubjectCardProps> = ({ subject, isOffline = f
       }
   };
 
-  const handleCollapse = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsExpanded(false);
-    // Smooth scroll back to card top to maintain context
-    setTimeout(() => {
-        cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }, 50);
-  };
-
   return (
     <div 
-        ref={cardRef}
-        className={`bg-white rounded-xl border border-slate-100 shadow-soft overflow-visible transition-all duration-300 ${isExpanded ? `border-y border-r ${borderColor} my-3` : 'hover:bg-slate-50'}`}
+        className="bg-white rounded-xl border border-slate-100 shadow-soft overflow-visible transition-all duration-300 my-1"
     >
-      {/* HEADER: Boxed Metrics with Intrinsic Sizing (Flex) */}
-      <div 
-        className="p-4 cursor-pointer bg-white rounded-xl relative z-10"
-        onClick={() => setIsExpanded(!isExpanded)}
-      >
-        <div className="flex items-start gap-3">
-            {/* 1. Icon Anchor */}
-            <div className={`size-10 rounded-lg flex shrink-0 items-center justify-center font-bold text-lg ${iconBg}`}>
-                {subject.name.charAt(0)}
-            </div>
+      {/* HEADER: High Density Dashboard Layout */}
+      <div className="p-5 pb-2 bg-white rounded-t-xl relative z-10">
+        <div className="flex justify-between items-end">
+             {/* Left: Score Anchor (Zone A) */}
+             <div>
+                <h4 className="text-[10px] font-bold text-slate-400 tracking-widest uppercase mb-1">{subject.name}</h4>
+                <div className="flex items-baseline gap-2">
+                   <span className="text-5xl font-black text-slate-800 tracking-tighter">{subject.score}</span>
+                   <span className="text-lg font-medium text-slate-300">/ {subject.totalMarks}</span>
+                </div>
+             </div>
 
-            {/* 2. Structured Content */}
-            <div className="flex-1 min-w-0 pt-0.5">
+             {/* Right: Diagnostics Grid (Zone B) */}
+             <div className="flex items-center gap-4 mb-1.5">
+                {/* Rank */}
+                <div className="flex flex-col items-end">
+                   <span className="text-[10px] font-bold text-slate-400 tracking-wider">AIR</span>
+                   <span className="text-lg font-bold text-slate-700">#{subject.subjectAir}</span>
+                </div>
                 
-                {/* Row 1: Name and Primary Score */}
-                <div className="flex justify-between items-center mb-3">
-                    <h4 className="text-sm font-bold text-slate-800 tracking-tight">{subject.name}</h4>
-                    <div className="flex items-baseline gap-1">
-                        <span className="text-base font-bold text-slate-900">{subject.score}</span>
-                        <span className="text-[10px] text-slate-400 font-medium">/ {subject.totalMarks}</span>
-                    </div>
+                {/* Divider */}
+                <div className="w-px h-8 bg-slate-100"></div>
+
+                {/* Accuracy */}
+                <div className="flex flex-col items-end">
+                   <span className="text-[10px] font-bold text-slate-400 tracking-wider uppercase">Accuracy</span>
+                   <span className={`text-lg font-bold ${subject.accuracy < 75 ? 'text-ref-red' : 'text-ref-green-dark'}`}>
+                      {Math.round(subject.accuracy)}%
+                   </span>
                 </div>
 
-                {/* Row 2: Metrics Flex - Use flex to hug content instead of grid stretching */}
-                <div className="flex flex-row items-center gap-2">
-                    {/* Rank */}
-                    <div className="bg-slate-50 border border-slate-100 rounded-md py-1.5 px-3 flex items-center gap-2">
-                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Rank</span>
-                         <span className="text-xs font-bold text-slate-700">#{subject.subjectAir}</span>
-                    </div>
-
-                    {/* Time (Conditional) */}
-                    {!isOffline && (
-                        <div className="bg-slate-50 border border-slate-100 rounded-md py-1.5 px-3 flex items-center gap-2">
-                             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Time</span>
-                             <span className="text-xs font-bold text-slate-700">{subject.timeSpent}</span>
-                        </div>
-                    )}
-
-                    {/* Accuracy */}
-                    <div className="bg-slate-50 border border-slate-100 rounded-md py-1.5 px-3 flex items-center gap-2">
-                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Accuracy</span>
-                         <span className={`text-xs font-bold ${subject.accuracy < 75 ? 'text-ref-red' : subject.accuracy >= 90 ? 'text-ref-green-dark' : 'text-slate-700'}`}>
-                            {Math.round(subject.accuracy)}%
-                         </span>
-                    </div>
-                </div>
-            </div>
-
-            {/* Expand Chevron */}
-            <div className="mt-1 flex items-start pl-1">
-                 <span className={`material-symbols-outlined text-slate-300 text-lg transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}>
-                    expand_more
-                 </span>
-            </div>
+                {/* Time (Conditional) */}
+                {!isOffline && (
+                   <>
+                       <div className="w-px h-8 bg-slate-100"></div>
+                       <div className="flex flex-col items-end">
+                           <span className="text-[10px] font-bold text-slate-400 tracking-wider">TIME</span>
+                           <span className="text-lg font-bold text-slate-700">{subject.timeSpent}</span>
+                       </div>
+                   </>
+                )}
+             </div>
         </div>
       </div>
 
-      <div 
-        className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${isExpanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}
-      >
+      <div className="grid grid-rows-[1fr]">
         <div className="overflow-hidden min-h-0 bg-white border-t border-slate-50">
             
             {/* 1. CONTEXT BAR (3 Columns) */}
@@ -499,12 +432,6 @@ export const SubjectCard: React.FC<SubjectCardProps> = ({ subject, isOffline = f
                     ))}
                 </div>
 
-                <div className="flex flex-wrap gap-x-4 gap-y-2 mb-4 text-[10px] text-slate-500">
-                    <div className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-ref-green"></span> Correct</div>
-                    <div className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-ref-red"></span> Incorrect</div>
-                    <div className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-ref-gray"></span> Unattempted</div>
-                </div>
-
                 <button
                     onClick={() => {
                         setShowQuestionTable(!showQuestionTable);
@@ -621,20 +548,6 @@ export const SubjectCard: React.FC<SubjectCardProps> = ({ subject, isOffline = f
             )}
         </div>
       </div>
-      
-      {/* FLOATING COLLAPSE ACTION BUTTON (FAB) */}
-      {isExpanded && mounted && createPortal(
-        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100]">
-            <button 
-                onClick={handleCollapse}
-                className="flex items-center gap-2 bg-white text-slate-700 pl-4 pr-5 py-3 rounded-full shadow-xl hover:bg-slate-50 active:scale-95 transition-all border border-slate-200"
-            >
-                <span className="material-symbols-outlined text-xl text-slate-400">unfold_less</span>
-                <span className="text-xs font-bold uppercase tracking-wide">Close</span>
-            </button>
-        </div>,
-        document.body
-      )}
     </div>
   );
 };

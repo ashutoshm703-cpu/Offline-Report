@@ -1,10 +1,13 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { TEST_DATA } from './constants';
 import { SubjectCard } from './components/SubjectCard';
 
 const App: React.FC = () => {
   const data = TEST_DATA;
+  const [activeSubject, setActiveSubject] = useState(data.subjects[0].name);
+
+  const activeSubjectData = data.subjects.find(s => s.name === activeSubject) || data.subjects[0];
 
   return (
     <div className="bg-background-light min-h-screen text-text-dark pb-12 font-sans selection:bg-blue-100">
@@ -24,7 +27,7 @@ const App: React.FC = () => {
         </div>
       </div>
 
-      <div className="px-4 pt-6 flex flex-col gap-6 max-w-md mx-auto w-full">
+      <div className="px-4 pt-6 flex flex-col gap-6 max-w-md mx-auto w-full relative">
         
         {/* Title Section */}
         <div>
@@ -295,12 +298,34 @@ const App: React.FC = () => {
             )}
         </div>
 
-        {/* Subject Breakdown */}
-        <div className="flex flex-col gap-4">
-            <h3 className="text-base font-bold text-slate-800 px-1">Subject Breakdown</h3>
-            {data.subjects.map((subject, idx) => (
-                <SubjectCard key={idx} subject={subject} isOffline={data.isOffline} />
-            ))}
+        {/* Sticky Tabs for Subjects */}
+        <div className="sticky top-[57px] z-40 bg-background-light/95 backdrop-blur pt-2 pb-2 -mx-4 px-4 border-b border-slate-200/50">
+           <div className="flex gap-2 overflow-x-auto no-scrollbar">
+                {data.subjects.map((s) => (
+                    <button
+                        key={s.name}
+                        onClick={() => setActiveSubject(s.name)}
+                        className={`
+                            whitespace-nowrap flex-1 px-4 py-2.5 rounded-lg text-xs font-bold transition-all border
+                            ${activeSubject === s.name 
+                                ? 'bg-white border-primary/20 text-slate-800 shadow-sm ring-1 ring-primary/5' 
+                                : 'bg-slate-100/50 text-slate-500 border-transparent hover:bg-slate-100 hover:text-slate-600'
+                            }
+                        `}
+                    >
+                        {s.name}
+                    </button>
+                ))}
+           </div>
+        </div>
+
+        {/* Subject Detail View */}
+        <div className="flex flex-col gap-4 min-h-[500px]">
+            <SubjectCard 
+                key={activeSubject} 
+                subject={activeSubjectData} 
+                isOffline={data.isOffline} 
+            />
         </div>
 
         <div className="h-8"></div>
