@@ -416,12 +416,23 @@ export const SubjectCard: React.FC<SubjectCardProps> = ({ subject, isOffline = f
                     {subject.questions.map((q) => (
                          <div 
                             key={q.id} 
-                            className={`size-8 rounded ${getResultColor(q.result)} text-xs font-bold flex items-center justify-center cursor-default shadow-sm relative group`}
-                            title={`Q${q.id}: ${q.result}`}
+                            className={`size-8 rounded ${getResultColor(q.result)} text-xs font-bold flex items-center justify-center shadow-sm relative group cursor-pointer hover:ring-2 hover:ring-offset-1 hover:-translate-y-0.5 transition-all duration-200`}
                          >
                              {q.id}
-                             <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 bg-slate-800 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10 hidden sm:block">
-                                {q.chapter || 'Unknown Topic'}
+                             {/* Hybrid Tooltip - Custom Chip for Chapter */}
+                             <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 w-max pointer-events-none hidden sm:block z-50">
+                                {/* Custom Chip: Chapter (Context) */}
+                                <div className="mb-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 ease-out">
+                                    <div className="bg-white border border-slate-100 text-slate-500 text-[10px] font-medium px-2.5 py-1 rounded shadow-sm whitespace-nowrap">
+                                        {q.chapter || 'Unknown Topic'}
+                                    </div>
+                                </div>
+                             </div>
+
+                             {/* Custom Solution Tooltip (Delay 700ms) - Positioned Below */}
+                             <div className="absolute top-full mt-1 left-1/2 -translate-x-1/2 px-1.5 py-0.5 bg-slate-500 text-white text-[9px] rounded shadow-lg whitespace-nowrap z-50 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-200 group-hover:delay-700">
+                                Click to view solution
+                                <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-[3px] border-transparent border-b-slate-500"></div>
                              </div>
                          </div>
                     ))}
@@ -505,12 +516,24 @@ export const SubjectCard: React.FC<SubjectCardProps> = ({ subject, isOffline = f
                                 <tbody className="divide-y divide-slate-100">
                                     {filteredQuestions.length > 0 ? (
                                         filteredQuestions.map((q) => (
-                                            <tr key={q.id} className="hover:bg-slate-50 transition-colors">
-                                                <td className="pl-4 pr-1 py-2.5 align-middle text-left">
-                                                    <span className="font-bold text-slate-700">Q{q.id}</span>
+                                            <tr key={q.id} className="hover:bg-blue-50/50 transition-colors cursor-pointer group">
+                                                <td className="pl-4 pr-1 py-2.5 align-middle text-left relative">
+                                                    {/* Tooltip Wrapper */}
+                                                    <div className="inline-block relative group/tooltip">
+                                                        <span 
+                                                            className="font-bold text-slate-700 hover:text-primary hover:underline hover:underline-offset-4 transition-colors cursor-pointer"
+                                                        >
+                                                            Q{q.id}
+                                                        </span>
+                                                        {/* Custom Tooltip - Right Side, Delayed */}
+                                                        <div className="absolute left-full top-1/2 -translate-y-1/2 ml-1.5 px-1.5 py-0.5 bg-slate-500 text-white text-[9px] rounded shadow-lg whitespace-nowrap z-50 pointer-events-none opacity-0 group-hover/tooltip:opacity-100 transition-opacity duration-200 group-hover/tooltip:delay-700">
+                                                            Click to view solution
+                                                            <div className="absolute right-full top-1/2 -translate-y-1/2 border-[3px] border-transparent border-r-slate-500"></div>
+                                                        </div>
+                                                    </div>
                                                 </td>
                                                 <td className="px-2 py-2.5 align-middle">
-                                                    <span className="text-[10px] font-medium text-slate-600 leading-tight block line-clamp-2" title={q.chapter}>
+                                                    <span className="text-[10px] font-medium text-slate-600 leading-tight block line-clamp-2">
                                                         {q.chapter || '-'}
                                                     </span>
                                                 </td>
