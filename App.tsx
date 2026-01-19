@@ -53,7 +53,10 @@ const App: React.FC = () => {
                     <p className="text-xs text-slate-500 font-medium">AIR</p>
                     <div className="flex items-center gap-1">
                         <span className="material-symbols-outlined text-base text-amber-500">emoji_events</span>
-                        <p className="text-xl font-bold text-slate-800">#{data.competition.air}</p>
+                        <p className="text-xl font-bold text-slate-800">
+                            #{data.competition.air}
+                            <span className="text-xs text-slate-400 font-medium ml-1">/ {data.snapshot.totalStudents}</span>
+                        </p>
                     </div>
                 </div>
                 <div className="flex flex-col gap-1 border-l border-slate-50 pl-4">
@@ -129,15 +132,15 @@ const App: React.FC = () => {
             <div className="grid grid-cols-3 gap-3">
                 <div className="p-3 bg-slate-50 rounded-lg text-center">
                     <p className="text-[10px] uppercase text-slate-400 font-bold mb-1">State</p>
-                    <p className="text-lg font-bold text-slate-800">{data.competition.stateRank}</p>
+                    <p className="text-lg font-bold text-slate-600">{data.competition.stateRank}</p>
                 </div>
                 <div className="p-3 bg-slate-50 rounded-lg text-center">
                     <p className="text-[10px] uppercase text-slate-400 font-bold mb-1">City</p>
-                    <p className="text-lg font-bold text-slate-800">{data.competition.cityRank}</p>
+                    <p className="text-lg font-bold text-slate-600">{data.competition.cityRank}</p>
                 </div>
                 <div className="p-3 bg-slate-50 rounded-lg text-center">
                     <p className="text-[10px] uppercase text-slate-400 font-bold mb-1">Batch</p>
-                    <p className="text-lg font-bold text-slate-800">{data.competition.batchRank}</p>
+                    <p className="text-lg font-bold text-slate-600">{data.competition.batchRank}</p>
                 </div>
             </div>
         </div>
@@ -151,12 +154,18 @@ const App: React.FC = () => {
                     </span>
                     {data.isOffline ? 'Attempt' : 'Attempt & Time'}
                 </h3>
-                {!data.isOffline && (
-                    <div className="flex items-baseline gap-1.5">
-                        <span className="text-sm font-bold text-slate-800">{data.time.totalUsed}</span>
-                        <span className="text-xs text-slate-400 font-medium">/ {data.time.allowed}</span>
-                    </div>
-                )}
+                
+                <div className="flex items-center gap-3">
+                     <span className="text-[11px] font-bold text-slate-500 bg-slate-50 px-3 py-1 rounded-full border border-slate-100">
+                        {data.usage.total} Qs
+                    </span>
+                    {!data.isOffline && (
+                        <div className="flex items-baseline gap-1.5 pl-2 border-l border-slate-100">
+                            <span className="text-sm font-bold text-slate-800">{data.time.totalUsed}</span>
+                            <span className="text-xs text-slate-400 font-medium">/ {data.time.allowed}</span>
+                        </div>
+                    )}
+                </div>
             </div>
 
             {data.isOffline ? (
@@ -169,39 +178,42 @@ const App: React.FC = () => {
                         {/* Remaining space is implicitly unattempted/slate-100 background */}
                     </div>
 
-                    {/* 2. Minimal Stats Row */}
-                    <div className="flex items-center justify-between px-1">
+                    {/* 2. Minimal Stats Row - Cleaner Look */}
+                    <div className="flex items-center justify-between px-2">
                         {/* Correct */}
-                        <div className="flex flex-col gap-1">
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                        <div className="flex flex-col gap-0.5">
+                            <div className="flex items-center gap-1.5">
                                 <span className="size-1.5 rounded-full bg-ref-green"></span>
-                                Correct
+                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Correct</span>
+                            </div>
+                            <span className="text-xl font-bold text-slate-800 leading-none">
+                                {data.usage.correct}
+                                <span className="text-[10px] text-slate-400 font-medium ml-1">Qs</span>
                             </span>
-                            <span className="text-2xl font-bold text-slate-800 leading-none">{data.usage.correct}</span>
                         </div>
-
-                        {/* Divider */}
-                        <div className="w-px h-8 bg-slate-100"></div>
 
                         {/* Incorrect */}
-                        <div className="flex flex-col gap-1">
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                        <div className="flex flex-col gap-0.5">
+                            <div className="flex items-center gap-1.5">
                                 <span className="size-1.5 rounded-full bg-ref-red"></span>
-                                Incorrect
+                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Incorrect</span>
+                            </div>
+                            <span className="text-xl font-bold text-slate-800 leading-none">
+                                {data.usage.incorrect}
+                                <span className="text-[10px] text-slate-400 font-medium ml-1">Qs</span>
                             </span>
-                            <span className="text-2xl font-bold text-slate-800 leading-none">{data.usage.incorrect}</span>
                         </div>
 
-                        {/* Divider */}
-                        <div className="w-px h-8 bg-slate-100"></div>
-
                         {/* Unattempted */}
-                        <div className="flex flex-col gap-1 pr-2">
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                        <div className="flex flex-col gap-0.5">
+                            <div className="flex items-center gap-1.5">
                                 <span className="size-1.5 rounded-full bg-slate-300"></span>
-                                Skipped
+                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Unattempted</span>
+                            </div>
+                            <span className="text-xl font-bold text-slate-800 leading-none">
+                                {data.usage.unattempted}
+                                <span className="text-[10px] text-slate-400 font-medium ml-1">Qs</span>
                             </span>
-                            <span className="text-2xl font-bold text-slate-800 leading-none">{data.usage.unattempted}</span>
                         </div>
                     </div>
                 </div>
@@ -209,20 +221,22 @@ const App: React.FC = () => {
                 // Online View: Matrix View
                 <div className="flex flex-col gap-3">
                     {/* Header Row - ADJUSTED GRID COLS (5-4-3) */}
-                    <div className="grid grid-cols-12 gap-2 text-[10px] font-bold uppercase text-slate-400 px-3">
+                    <div className="grid grid-cols-12 gap-2 text-[10px] font-bold uppercase text-slate-400 px-3 border-b border-slate-50 pb-2">
                         <div className="col-span-5">Status</div>
                         <div className="col-span-4">Time</div>
                         <div className="col-span-3 text-right">Avg Speed</div>
                     </div>
 
-                    {/* Correct Row - ADJUSTED GRID COLS */}
-                    <div className="grid grid-cols-12 gap-2 items-center bg-emerald-50/50 rounded-xl p-3 border-l-4 border-ref-green">
+                    {/* Correct Row - Cleaner White Card Style */}
+                    <div className="grid grid-cols-12 gap-2 items-center bg-white rounded-lg p-2 border border-slate-100 shadow-sm border-l-[3px] border-l-ref-green">
                         <div className="col-span-5">
                             <div className="flex items-center gap-2">
                                 <span className="material-symbols-outlined text-lg text-ref-green-dark">check_circle</span>
                                 <div>
-                                    <span className="block text-lg font-bold text-slate-800 leading-none">{data.usage.correct}</span>
-                                    <span className="text-[10px] font-bold text-ref-green-dark uppercase">Correct</span>
+                                    <span className="block text-xl font-bold text-slate-800 leading-none">
+                                        {data.usage.correct} <span className="text-[10px] font-medium text-slate-400">Qs</span>
+                                    </span>
+                                    <span className="text-[10px] font-bold text-slate-400 uppercase">Correct</span>
                                 </div>
                             </div>
                         </div>
@@ -231,7 +245,7 @@ const App: React.FC = () => {
                                 <div className="flex justify-between items-baseline mb-1">
                                     <span className="text-xs font-bold text-slate-700">{data.time.breakdown.correct}</span>
                                 </div>
-                                <div className="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
+                                <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
                                     <div className="h-full bg-ref-green" style={{ width: `${data.time.correctTimePercent}%` }}></div>
                                 </div>
                             </div>
@@ -242,14 +256,16 @@ const App: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* Incorrect Row - ADJUSTED GRID COLS */}
-                    <div className="grid grid-cols-12 gap-2 items-center bg-red-50/50 rounded-xl p-3 border-l-4 border-ref-red">
+                    {/* Incorrect Row - Cleaner White Card Style */}
+                    <div className="grid grid-cols-12 gap-2 items-center bg-white rounded-lg p-2 border border-slate-100 shadow-sm border-l-[3px] border-l-ref-red">
                         <div className="col-span-5">
                             <div className="flex items-center gap-2">
                                 <span className="material-symbols-outlined text-lg text-ref-red">cancel</span>
                                 <div>
-                                    <span className="block text-lg font-bold text-slate-800 leading-none">{data.usage.incorrect}</span>
-                                    <span className="text-[10px] font-bold text-ref-red uppercase">Incorrect</span>
+                                    <span className="block text-xl font-bold text-slate-800 leading-none">
+                                        {data.usage.incorrect} <span className="text-[10px] font-medium text-slate-400">Qs</span>
+                                    </span>
+                                    <span className="text-[10px] font-bold text-slate-400 uppercase">Incorrect</span>
                                 </div>
                             </div>
                         </div>
@@ -258,7 +274,7 @@ const App: React.FC = () => {
                                 <div className="flex justify-between items-baseline mb-1">
                                     <span className="text-xs font-bold text-slate-700">{data.time.breakdown.incorrect}</span>
                                 </div>
-                                <div className="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
+                                <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
                                     <div className="h-full bg-ref-red" style={{ width: `${data.time.incorrectTimePercent}%` }}></div>
                                 </div>
                             </div>
@@ -269,14 +285,16 @@ const App: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* Unattempted Row - ADJUSTED GRID COLS */}
-                    <div className="grid grid-cols-12 gap-2 items-center bg-slate-50 rounded-xl p-3 border-l-4 border-slate-300">
+                    {/* Unattempted Row - Cleaner White Card Style */}
+                    <div className="grid grid-cols-12 gap-2 items-center bg-white rounded-lg p-2 border border-slate-100 shadow-sm border-l-[3px] border-l-slate-300">
                         <div className="col-span-5">
                             <div className="flex items-center gap-2">
                                 <span className="material-symbols-outlined text-lg text-slate-400">do_not_disturb_on</span>
                                 <div>
-                                    <span className="block text-lg font-bold text-slate-800 leading-none">{data.usage.unattempted}</span>
-                                    <span className="text-[10px] font-bold text-slate-500 uppercase">Unattempted</span>
+                                    <span className="block text-xl font-bold text-slate-800 leading-none">
+                                        {data.usage.unattempted} <span className="text-[10px] font-medium text-slate-400">Qs</span>
+                                    </span>
+                                    <span className="text-[10px] font-bold text-slate-400 uppercase">Unattempted</span>
                                 </div>
                             </div>
                         </div>
@@ -285,7 +303,7 @@ const App: React.FC = () => {
                                 <div className="flex justify-between items-baseline mb-1">
                                     <span className="text-xs font-bold text-slate-500">{data.time.breakdown.unattempted}</span>
                                 </div>
-                                <div className="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
+                                <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
                                     <div className="h-full bg-slate-400" style={{ width: `${data.time.unattemptedTimePercent}%` }}></div>
                                 </div>
                             </div>

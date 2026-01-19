@@ -63,12 +63,17 @@ export const TEST_DATA: TestResultData = {
       score: 280,
       topperScore: 340,
       averageScore: 210,
-      subjectAir: 840,
       percentile: 78,
       totalMarks: 360,
       accuracy: 72,
-      batchRank: 42,
-      totalBatchStudents: 120,
+      ranks: {
+        air: { rank: 840, total: 15000 },
+        state: { rank: 120, total: 2000 },
+        course: { rank: 450, total: 5000 },
+        program: { rank: 210, total: 1200 },
+        section: { rank: 12, total: 60 },
+        batch: { rank: 42, total: 120 }
+      },
       timeSpent: "55m",
       timeBreakdown: {
         correct: "35m",
@@ -88,7 +93,10 @@ export const TEST_DATA: TestResultData = {
         improve: [
             { name: "Ecology", total: 10, correct: 4, incorrect: 6, unattempted: 0 },
             { name: "Biotech", total: 8, correct: 3, incorrect: 4, unattempted: 1 },
-            { name: "Reproduction", total: 12, correct: 5, incorrect: 5, unattempted: 2 }
+            { name: "Reproduction", total: 12, correct: 5, incorrect: 5, unattempted: 2 },
+            { name: "Animal Kingdom", total: 8, correct: 3, incorrect: 4, unattempted: 1 },
+            { name: "Morphology", total: 9, correct: 4, incorrect: 5, unattempted: 0 },
+            { name: "Cell Cycle", total: 7, correct: 2, incorrect: 4, unattempted: 1 }
         ]
       },
       questionBehavior: {
@@ -113,12 +121,17 @@ export const TEST_DATA: TestResultData = {
       score: 110,
       topperScore: 165,
       averageScore: 85,
-      subjectAir: 450,
       percentile: 65,
       totalMarks: 180,
       accuracy: 65,
-      batchRank: 30,
-      totalBatchStudents: 120,
+      ranks: {
+        air: { rank: 450, total: 15000 },
+        state: { rank: 80, total: 2000 },
+        course: { rank: 200, total: 5000 },
+        program: { rank: 95, total: 1200 },
+        section: { rank: 8, total: 60 },
+        batch: { rank: 30, total: 120 }
+      },
       timeSpent: "1h 10m",
       timeBreakdown: {
         correct: "25m",
@@ -160,12 +173,17 @@ export const TEST_DATA: TestResultData = {
       score: 130,
       topperScore: 150,
       averageScore: 90,
-      subjectAir: 120,
       percentile: 92,
       totalMarks: 180,
       accuracy: 92,
-      batchRank: 3,
-      totalBatchStudents: 120,
+      ranks: {
+        air: { rank: 120, total: 15000 },
+        state: { rank: 15, total: 2000 },
+        course: { rank: 40, total: 5000 },
+        program: { rank: 18, total: 1200 },
+        section: { rank: 1, total: 60 },
+        batch: { rank: 3, total: 120 }
+      },
       timeSpent: "40m",
       timeBreakdown: {
         correct: "31m",

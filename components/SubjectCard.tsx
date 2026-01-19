@@ -2,33 +2,233 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { SubjectData, SubjectStatus, Status, ChapterStat } from '../types';
 
-interface ChapterRowProps {
-  chapter: ChapterStat;
-  activeChapterFilter: string | null;
-  onSelect: (chapterName: string) => void;
-}
+// Compact Poster Component for Netflix-style Swimlanes
+const ChapterPoster = ({ 
+    chapter, 
+    variant, 
+    isActive, 
+    onSelect 
+}: { 
+    chapter: ChapterStat, 
+    variant: 'improve' | 'good' | 'strong', 
+    isActive: boolean, 
+    onSelect: (name: string) => void 
+}) => {
+    const accuracy = chapter.total > 0 ? Math.round((chapter.correct / chapter.total) * 100) : 0;
+    
+    // Style configurations based on variant
+    let styles = {
+        bg: 'bg-white',
+        border: 'border-slate-100',
+        ringTrack: 'text-slate-100',
+        ringColor: 'text-slate-400',
+        textColor: 'text-slate-600',
+        badgeBg: 'bg-slate-50',
+        badgeText: 'text-slate-500'
+    };
 
-const ChapterRow: React.FC<ChapterRowProps> = ({ chapter, activeChapterFilter, onSelect }) => (
-  <div className="flex items-start justify-between py-2 text-xs border-b border-white/10 last:border-0 group">
-      <div className="font-medium truncate pr-2 flex flex-col">
-          <span>{chapter.name}</span>
-          <div className="flex items-center gap-2 whitespace-nowrap text-[10px] opacity-90 mt-0.5">
-              <span className="font-bold">{chapter.total} Qs</span>
-              <span className="flex items-center gap-0.5"><span className="size-1 bg-white rounded-full"></span> {chapter.correct} Correct</span>
-              <span className="flex items-center gap-0.5"><span className="size-1 bg-white/60 rounded-full"></span> {chapter.incorrect} Incorrect</span>
-          </div>
-      </div>
-      <div className="relative flex items-center group/btn">
-          <button 
-              onClick={() => onSelect(chapter.name)}
-              className={`text-[10px] font-bold transition-colors px-2 py-1 rounded flex items-center gap-1 ${activeChapterFilter === chapter.name ? 'bg-white text-slate-800 shadow-sm' : 'bg-white/20 text-white hover:bg-white/30'}`}
-          >
-              {activeChapterFilter === chapter.name ? 'Active' : 'View Qs'}
-              <span className="material-symbols-outlined text-xs">{activeChapterFilter === chapter.name ? 'check' : 'arrow_forward'}</span>
-          </button>
-      </div>
-  </div>
-);
+    if (variant === 'improve') {
+        styles = {
+            bg: 'bg-red-50/40',
+            border: 'border-red-100',
+            ringTrack: 'text-red-200',
+            ringColor: 'text-red-500',
+            textColor: 'text-red-700',
+            badgeBg: 'bg-white/80',
+            badgeText: 'text-red-700'
+        };
+    } else if (variant === 'good') {
+        styles = {
+            bg: 'bg-amber-50/40',
+            border: 'border-amber-100',
+            ringTrack: 'text-amber-200',
+            ringColor: 'text-amber-500',
+            textColor: 'text-amber-700',
+            badgeBg: 'bg-white/80',
+            badgeText: 'text-amber-700'
+        };
+    } else if (variant === 'strong') {
+        styles = {
+            bg: 'bg-emerald-50/40',
+            border: 'border-emerald-100',
+            ringTrack: 'text-emerald-200',
+            ringColor: 'text-emerald-500',
+            textColor: 'text-emerald-700',
+            badgeBg: 'bg-white/80',
+            badgeText: 'text-emerald-700'
+        };
+    }
+
+    // SVG Circle Math - Standardized to 40x40 Grid
+    const size = 40;
+    const center = size / 2; // 20
+    const strokeWidth = 4; // Thicker for better visibility
+    const radius = (size - strokeWidth) / 2; // 18
+    const circumference = 2 * Math.PI * radius;
+    const offset = circumference - (accuracy / 100) * circumference;
+
+    return (
+        <button 
+            onClick={() => onSelect(chapter.name)}
+            className={`
+                relative flex-shrink-0 w-32 p-3 rounded-xl border snap-start text-left transition-all duration-200 group
+                flex flex-col gap-3
+                ${styles.bg} ${styles.border}
+                ${isActive ? 'ring-2 ring-primary ring-offset-2 shadow-md' : 'shadow-sm hover:shadow-md hover:-translate-y-0.5'}
+            `}
+        >
+            <div className="flex justify-between items-start">
+                 {/* Circular Progress */}
+                <div className="relative size-10 flex-shrink-0">
+                    <svg className="size-full -rotate-90" viewBox={`0 0 ${size} ${size}`}>
+                        {/* Background Track */}
+                        <circle 
+                            cx={center} 
+                            cy={center} 
+                            r={radius} 
+                            fill="transparent" 
+                            stroke="currentColor" 
+                            strokeWidth={strokeWidth} 
+                            className={styles.ringTrack} 
+                        />
+                        {/* Progress Value */}
+                        <circle 
+                            cx={center} 
+                            cy={center} 
+                            r={radius} 
+                            fill="transparent" 
+                            stroke="currentColor" 
+                            strokeWidth={strokeWidth} 
+                            strokeDasharray={circumference} 
+                            strokeDashoffset={offset} 
+                            strokeLinecap="round" 
+                            className={styles.ringColor} 
+                        />
+                    </svg>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                        <span className={`text-[9px] font-bold ${styles.textColor}`}>{accuracy}%</span>
+                    </div>
+                </div>
+
+                {/* Question Count Badge */}
+                <div className={`px-1.5 py-0.5 rounded text-[9px] font-bold border border-transparent ${styles.badgeBg} ${styles.badgeText}`}>
+                    {chapter.total} Qs
+                </div>
+            </div>
+            
+            <div className="flex-1 flex flex-col justify-between min-h-[2.5rem]">
+                <p className="text-[10px] font-bold text-slate-700 leading-tight line-clamp-2" title={chapter.name}>
+                    {chapter.name}
+                </p>
+                <div className="flex items-center gap-1 mt-2">
+                    <span className={`text-[9px] font-medium ${isActive ? 'text-primary' : 'text-slate-400 group-hover:text-primary'} transition-colors flex items-center gap-0.5`}>
+                        {isActive ? 'Viewing' : 'View Qs'} 
+                        <span className="material-symbols-outlined text-[10px]">{isActive ? 'visibility' : 'arrow_forward'}</span>
+                    </span>
+                </div>
+            </div>
+        </button>
+    );
+};
+
+// Independent Scrollable Swimlane Row Component
+const SwimlaneRow = ({ 
+    title, 
+    chapters, 
+    variant, 
+    activeChapter, 
+    onSelect 
+}: { 
+    title: string, 
+    chapters: ChapterStat[], 
+    variant: 'improve' | 'good' | 'strong',
+    activeChapter: string | null,
+    onSelect: (name: string) => void
+}) => {
+    const rowScrollRef = useRef<HTMLDivElement>(null);
+    const [canScrollLeft, setCanScrollLeft] = useState(false);
+    const [canScrollRight, setCanScrollRight] = useState(false);
+
+    const checkScroll = () => {
+        if (rowScrollRef.current) {
+            const { scrollLeft, scrollWidth, clientWidth } = rowScrollRef.current;
+            setCanScrollLeft(scrollLeft > 0);
+            setCanScrollRight(Math.ceil(scrollLeft + clientWidth) < scrollWidth - 2);
+        }
+    };
+
+    useEffect(() => {
+        checkScroll();
+        window.addEventListener('resize', checkScroll);
+        return () => window.removeEventListener('resize', checkScroll);
+    }, [chapters]);
+
+    const scrollRight = () => {
+        if (rowScrollRef.current) {
+            rowScrollRef.current.scrollBy({ left: 200, behavior: 'smooth' });
+        }
+    };
+
+    const scrollLeft = () => {
+        if (rowScrollRef.current) {
+            rowScrollRef.current.scrollBy({ left: -200, behavior: 'smooth' });
+        }
+    };
+
+    if (!chapters || chapters.length === 0) return null;
+
+    return (
+        <div className="mb-6 last:mb-2 relative">
+             <h6 className="px-5 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-2">
+                {variant === 'improve' && <span className="size-1.5 rounded-full bg-ref-red animate-pulse"></span>}
+                {title}
+                <span className="bg-slate-100 text-slate-500 px-1.5 rounded text-[9px]">{chapters.length}</span>
+            </h6>
+            
+            <div className="relative group/swimlane">
+                {/* Scroll Buttons - Visible on Desktop Hover */}
+                {canScrollLeft && (
+                    <button 
+                        onClick={scrollLeft} 
+                        className="absolute left-2 top-1/2 -translate-y-1/2 z-20 bg-white/90 backdrop-blur shadow-md border border-slate-100 rounded-full size-7 flex items-center justify-center text-slate-500 hover:text-primary transition-all hidden sm:flex"
+                    >
+                        <span className="material-symbols-outlined text-lg">chevron_left</span>
+                    </button>
+                )}
+                {canScrollRight && (
+                    <button 
+                        onClick={scrollRight} 
+                        className="absolute right-2 top-1/2 -translate-y-1/2 z-20 bg-white/90 backdrop-blur shadow-md border border-slate-100 rounded-full size-7 flex items-center justify-center text-slate-500 hover:text-primary transition-all hidden sm:flex"
+                    >
+                        <span className="material-symbols-outlined text-lg">chevron_right</span>
+                    </button>
+                )}
+
+                {/* Fade Gradients */}
+                <div className={`pointer-events-none absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-white to-transparent z-10 transition-opacity duration-300 ${canScrollLeft ? 'opacity-100' : 'opacity-0'}`} />
+                <div className={`pointer-events-none absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-white to-transparent z-10 transition-opacity duration-300 ${canScrollRight ? 'opacity-100' : 'opacity-0'}`} />
+
+                <div 
+                    ref={rowScrollRef}
+                    onScroll={checkScroll}
+                    className="flex overflow-x-auto gap-3 px-5 pb-2 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']"
+                >
+                    {chapters.map((chapter, i) => (
+                        <ChapterPoster 
+                            key={i} 
+                            chapter={chapter} 
+                            variant={variant}
+                            isActive={activeChapter === chapter.name}
+                            onSelect={onSelect}
+                        />
+                    ))}
+                    <div className="w-2 flex-shrink-0"></div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 
 interface SubjectCardProps {
   subject: SubjectData;
@@ -42,6 +242,37 @@ export const SubjectCard: React.FC<SubjectCardProps> = ({ subject, isOffline = f
   
   // Ref for auto-scrolling to table
   const tableContainerRef = useRef<HTMLDivElement>(null);
+
+  // Refs and State for Rank Breakdown Horizontal Scroll
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  const checkScroll = () => {
+    if (scrollRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
+      setCanScrollLeft(scrollLeft > 0);
+      setCanScrollRight(Math.ceil(scrollLeft + clientWidth) < scrollWidth - 2);
+    }
+  };
+
+  useEffect(() => {
+    checkScroll();
+    window.addEventListener('resize', checkScroll);
+    return () => window.removeEventListener('resize', checkScroll);
+  }, [subject]);
+
+  const scrollRight = () => {
+    if (scrollRef.current) {
+        scrollRef.current.scrollBy({ left: 150, behavior: 'smooth' });
+    }
+  };
+
+  const scrollLeft = () => {
+    if (scrollRef.current) {
+        scrollRef.current.scrollBy({ left: -150, behavior: 'smooth' });
+    }
+  };
 
   const getResultColor = (result: Status) => {
       switch(result) {
@@ -104,35 +335,7 @@ export const SubjectCard: React.FC<SubjectCardProps> = ({ subject, isOffline = f
       total: questionArrayCounts.All
   };
 
-  // TIME PARSING UTILS
-  const parseTimeToSeconds = (timeStr: string) => {
-    let totalSeconds = 0;
-    const hours = timeStr.match(/(\d+)h/);
-    const minutes = timeStr.match(/(\d+)m/);
-    const seconds = timeStr.match(/(\d+)s/);
-    
-    if (hours) totalSeconds += parseInt(hours[1]) * 3600;
-    if (minutes) totalSeconds += parseInt(minutes[1]) * 60;
-    if (seconds) totalSeconds += parseInt(seconds[1]);
-    
-    return totalSeconds;
-  };
-
-  const formatSeconds = (seconds: number) => {
-    if (isNaN(seconds) || seconds === 0) return '0s';
-    const h = Math.floor(seconds / 3600);
-    const m = Math.floor((seconds % 3600) / 60);
-    const s = Math.round(seconds % 60);
-    
-    const parts = [];
-    if (h > 0) parts.push(`${h}h`);
-    if (m > 0) parts.push(`${m}m`);
-    if (s > 0 && h === 0) parts.push(`${s}s`);
-    if (parts.length === 0) return '0s';
-    return parts.join(' ');
-  };
-
-  // New calculation for Attempt Rate
+  // Attempt Rate Calc
   const attemptedCount = displayCounts.total - displayCounts.unattempted;
   const attemptRate = displayCounts.total > 0 ? Math.round((attemptedCount / displayCounts.total) * 100) : 0;
 
@@ -148,13 +351,30 @@ export const SubjectCard: React.FC<SubjectCardProps> = ({ subject, isOffline = f
       }
   };
 
+  // Rank Chip Component
+  const RankChip = ({ label, rank, icon }: { label: string, rank: number, icon: string }) => {
+     return (
+        <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-slate-50 border border-slate-100/80 flex-shrink-0">
+            <span className="material-symbols-outlined text-[10px] text-slate-400">{icon}</span>
+            <div className="flex items-baseline gap-1">
+                <span className="text-[8px] font-bold text-slate-400 uppercase tracking-wide">
+                    {label}
+                </span>
+                <span className="text-[10px] font-bold text-slate-500">
+                    {rank}
+                </span>
+            </div>
+        </div>
+     );
+  };
+
   return (
     <div 
         className="bg-white rounded-xl border border-slate-100 shadow-soft overflow-visible transition-all duration-300 my-1"
     >
       {/* HEADER: High Density Dashboard Layout */}
-      <div className="p-5 pb-2 bg-white rounded-t-xl relative z-10">
-        <div className="flex justify-between items-end">
+      <div className="p-5 pb-0 bg-white rounded-t-xl relative z-10">
+        <div className="flex justify-between items-end mb-4">
              {/* Left: Score Anchor (Zone A) */}
              <div>
                 <h4 className="text-[10px] font-bold text-slate-400 tracking-widest uppercase mb-1">{subject.name}</h4>
@@ -164,18 +384,19 @@ export const SubjectCard: React.FC<SubjectCardProps> = ({ subject, isOffline = f
                 </div>
              </div>
 
-             {/* Right: Diagnostics Grid (Zone B) */}
-             <div className="flex items-center gap-4 mb-1.5">
-                {/* Rank */}
+             {/* Right: Diagnostics Grid (Zone B) - AIR | Accuracy | Time */}
+             <div className="flex items-center gap-3 mb-1.5">
+                {/* AIR (Priority 1) */}
                 <div className="flex flex-col items-end">
-                   <span className="text-[10px] font-bold text-slate-400 tracking-wider">AIR</span>
-                   <span className="text-lg font-bold text-slate-700">#{subject.subjectAir}</span>
+                    <span className="text-[10px] font-bold text-slate-400 tracking-wider uppercase">AIR</span>
+                    <span className="text-lg font-bold text-slate-800">
+                        #{subject.ranks.air.rank}
+                    </span>
                 </div>
-                
-                {/* Divider */}
+
                 <div className="w-px h-8 bg-slate-100"></div>
 
-                {/* Accuracy */}
+                {/* Accuracy (Priority 2) */}
                 <div className="flex flex-col items-end">
                    <span className="text-[10px] font-bold text-slate-400 tracking-wider uppercase">Accuracy</span>
                    <span className={`text-lg font-bold ${subject.accuracy < 75 ? 'text-ref-red' : 'text-ref-green-dark'}`}>
@@ -186,15 +407,55 @@ export const SubjectCard: React.FC<SubjectCardProps> = ({ subject, isOffline = f
                 {/* Time (Conditional) */}
                 {!isOffline && (
                    <>
-                       <div className="w-px h-8 bg-slate-100"></div>
-                       <div className="flex flex-col items-end">
-                           <span className="text-[10px] font-bold text-slate-400 tracking-wider">TIME</span>
-                           <span className="text-lg font-bold text-slate-700">{subject.timeSpent}</span>
-                       </div>
+                    <div className="w-px h-8 bg-slate-100"></div>
+                    <div className="flex flex-col items-end">
+                       <span className="text-[10px] font-bold text-slate-400 tracking-wider">TIME</span>
+                       <span className="text-lg font-bold text-slate-700">{subject.timeSpent}</span>
+                    </div>
                    </>
                 )}
              </div>
         </div>
+      </div>
+
+      {/* PILL/CHIP RANK LAYOUT */}
+      <div className="border-b border-slate-50 pb-2">
+         <div className="px-5 mb-1.5">
+            <p className="text-[10px] uppercase text-slate-400 font-bold flex items-center gap-1.5 tracking-wider">
+                <span className="material-symbols-outlined text-[12px]">leaderboard</span>
+                Rank Breakdown
+            </p>
+         </div>
+         
+         <div className="relative">
+             {/* Horizontal Scroll Chips */}
+             <div 
+                ref={scrollRef}
+                onScroll={checkScroll}
+                className="flex overflow-x-auto gap-2 px-5 pb-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']"
+             >
+                 <RankChip label="State" rank={subject.ranks.state.rank} icon="map" />
+                 <RankChip label="Batch" rank={subject.ranks.batch.rank} icon="group" />
+                 <RankChip label="Section" rank={subject.ranks.section.rank} icon="class" />
+                 <RankChip label="Program" rank={subject.ranks.program.rank} icon="school" />
+                 <RankChip label="Course" rank={subject.ranks.course.rank} icon="local_library" />
+                 <div className="w-2 flex-shrink-0"></div>
+             </div>
+             
+             {/* Gradients */}
+             <div className={`pointer-events-none absolute left-0 top-0 bottom-2 w-16 bg-gradient-to-r from-white via-white/90 to-transparent z-10 transition-opacity duration-300 ${canScrollLeft ? 'opacity-100' : 'opacity-0'}`} />
+             {canScrollLeft && (
+                <button onClick={scrollLeft} className="absolute left-2 top-[calc(50%-4px)] -translate-y-1/2 z-20 bg-white shadow-md border border-slate-100 rounded-full size-6 flex items-center justify-center text-slate-400 hover:text-primary transition-all">
+                    <span className="material-symbols-outlined text-base">chevron_left</span>
+                </button>
+             )}
+             <div className={`pointer-events-none absolute right-0 top-0 bottom-2 w-16 bg-gradient-to-l from-white via-white/90 to-transparent z-10 transition-opacity duration-300 ${canScrollRight ? 'opacity-100' : 'opacity-0'}`} />
+             {canScrollRight && (
+                <button onClick={scrollRight} className="absolute right-2 top-[calc(50%-4px)] -translate-y-1/2 z-20 bg-white shadow-md border border-slate-100 rounded-full size-6 flex items-center justify-center text-slate-400 hover:text-primary transition-all">
+                    <span className="material-symbols-outlined text-base">chevron_right</span>
+                </button>
+             )}
+         </div>
       </div>
 
       <div className="grid grid-rows-[1fr]">
@@ -218,19 +479,18 @@ export const SubjectCard: React.FC<SubjectCardProps> = ({ subject, isOffline = f
                  </div>
             </div>
 
-            {/* 2. ATTEMPT & TIME DISTRIBUTION - VISUAL BADGES (COMPACT) */}
+            {/* 2. ATTEMPT & TIME DISTRIBUTION */}
             <div className="p-5">
                 <div className="flex justify-between items-center mb-4">
                     <p className="text-[10px] uppercase text-slate-400 font-bold flex items-center gap-1.5 tracking-wider">
                         <span className="material-symbols-outlined text-base text-slate-300">{isOffline ? 'poll' : 'schedule'}</span>
-                        {isOffline ? 'Attempt Details' : 'Attempt & Time'}
+                        {isOffline ? 'Attempt' : 'Attempt & Time'}
                     </p>
                     <span className="text-[11px] font-bold text-slate-500 bg-slate-50 px-3 py-1 rounded-full border border-slate-100">
-                        {displayCounts.total} Questions
+                        {displayCounts.total} Qs
                     </span>
                 </div>
                 
-                {/* Visual Grid Layout - Compact Badges */}
                 <div className="grid grid-cols-3 gap-2">
                     {/* Correct Badge */}
                     <div className="p-2 rounded-lg bg-[#F0FDF4] border border-emerald-100/60">
@@ -239,7 +499,10 @@ export const SubjectCard: React.FC<SubjectCardProps> = ({ subject, isOffline = f
                             <span className="text-[9px] font-bold text-green-700 uppercase tracking-wide truncate">Correct</span>
                         </div>
                         <div className="flex items-baseline gap-1.5">
-                             <span className="text-base font-bold text-slate-800 leading-none">{displayCounts.correct}</span>
+                             <span className="text-base font-bold text-slate-800 leading-none">
+                                {displayCounts.correct}
+                                <span className="text-[10px] text-slate-500 font-medium ml-0.5">Qs</span>
+                             </span>
                              {!isOffline && (
                                 <span className="text-[9px] font-medium text-emerald-600/80">{subject.timeBreakdown.correct}</span>
                              )}
@@ -253,7 +516,10 @@ export const SubjectCard: React.FC<SubjectCardProps> = ({ subject, isOffline = f
                             <span className="text-[9px] font-bold text-red-700 uppercase tracking-wide truncate">Incorrect</span>
                         </div>
                         <div className="flex items-baseline gap-1.5">
-                             <span className="text-base font-bold text-slate-800 leading-none">{displayCounts.incorrect}</span>
+                             <span className="text-base font-bold text-slate-800 leading-none">
+                                {displayCounts.incorrect}
+                                <span className="text-[10px] text-slate-500 font-medium ml-0.5">Qs</span>
+                             </span>
                              {!isOffline && (
                                 <span className="text-[9px] font-medium text-red-600/80">{subject.timeBreakdown.incorrect}</span>
                              )}
@@ -267,7 +533,10 @@ export const SubjectCard: React.FC<SubjectCardProps> = ({ subject, isOffline = f
                             <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wide truncate">Unattempted</span>
                         </div>
                         <div className="flex items-baseline gap-1.5">
-                             <span className="text-base font-bold text-slate-800 leading-none">{displayCounts.unattempted}</span>
+                             <span className="text-base font-bold text-slate-800 leading-none">
+                                {displayCounts.unattempted}
+                                <span className="text-[10px] text-slate-500 font-medium ml-0.5">Qs</span>
+                             </span>
                              {!isOffline && (
                                 <span className="text-[9px] font-medium text-slate-400">{subject.timeBreakdown.unattempted}</span>
                              )}
@@ -276,73 +545,35 @@ export const SubjectCard: React.FC<SubjectCardProps> = ({ subject, isOffline = f
                 </div>
             </div>
 
-            {/* 3. Chapter Insights */}
-            <div className="px-5 py-6 border-b border-dashed border-slate-200 bg-white">
-                <h5 className="text-[11px] font-bold text-slate-400 mb-4 flex items-center gap-2 uppercase tracking-wider">
-                    <span className="material-symbols-outlined text-base">topic</span>
+            {/* 3. NEW CHAPTER INSIGHTS (Netflix Swimlanes) */}
+            <div className="border-b border-dashed border-slate-200 bg-white pt-4 pb-2">
+                <h5 className="px-5 text-[11px] font-bold text-slate-700 mb-5 flex items-center gap-2 uppercase tracking-wider">
+                    <span className="material-symbols-outlined text-base text-primary">topic</span>
                     Chapter Insights
                 </h5>
-                <div className="flex flex-col gap-3">
-                    {subject.chapters.strong.length > 0 && (
-                        <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 shadow-sm">
-                            <div className="absolute top-0 right-0 p-2 opacity-20">
-                                <span className="material-symbols-outlined text-white text-4xl">check_circle</span>
-                            </div>
-                            <div className="relative z-10 text-white p-4">
-                                <p className="text-xs font-bold uppercase tracking-wider mb-2 opacity-90 border-b border-white/20 pb-1">Strong Chapters</p>
-                                <div className="flex flex-col">
-                                    {subject.chapters.strong.map((c, i) => (
-                                        <ChapterRow 
-                                            key={i} 
-                                            chapter={c} 
-                                            activeChapterFilter={activeChapterFilter} 
-                                            onSelect={handleChapterSelect} 
-                                        />
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-                    )}
-                    {subject.chapters.good.length > 0 && (
-                        <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-amber-300 to-amber-500 shadow-sm">
-                            <div className="absolute top-0 right-0 p-2 opacity-20">
-                                <span className="material-symbols-outlined text-white text-4xl">thumb_up</span>
-                            </div>
-                            <div className="relative z-10 text-white p-4">
-                                <p className="text-xs font-bold uppercase tracking-wider mb-2 opacity-90 border-b border-white/20 pb-1">Good Chapters</p>
-                                <div className="flex flex-col">
-                                    {subject.chapters.good.map((c, i) => (
-                                        <ChapterRow 
-                                            key={i} 
-                                            chapter={c} 
-                                            activeChapterFilter={activeChapterFilter} 
-                                            onSelect={handleChapterSelect} 
-                                        />
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-                    )}
-                    {subject.chapters.improve.length > 0 && (
-                        <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-rose-400 to-rose-600 shadow-sm">
-                            <div className="absolute top-0 right-0 p-2 opacity-20">
-                                <span className="material-symbols-outlined text-white text-4xl">error</span>
-                            </div>
-                            <div className="relative z-10 text-white p-4">
-                                <p className="text-xs font-bold uppercase tracking-wider mb-2 opacity-90 border-b border-white/20 pb-1">Needs Improvement</p>
-                                <div className="flex flex-col">
-                                    {subject.chapters.improve.map((c, i) => (
-                                        <ChapterRow 
-                                            key={i} 
-                                            chapter={c} 
-                                            activeChapterFilter={activeChapterFilter} 
-                                            onSelect={handleChapterSelect} 
-                                        />
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-                    )}
+                
+                <div className="flex flex-col gap-2">
+                    <SwimlaneRow 
+                        title="Critical Attention Needed" 
+                        chapters={subject.chapters.improve} 
+                        variant="improve"
+                        activeChapter={activeChapterFilter}
+                        onSelect={handleChapterSelect}
+                    />
+                    <SwimlaneRow 
+                        title="On the Edge" 
+                        chapters={subject.chapters.good} 
+                        variant="good"
+                        activeChapter={activeChapterFilter}
+                        onSelect={handleChapterSelect}
+                    />
+                    <SwimlaneRow 
+                        title="Mastered Topics" 
+                        chapters={subject.chapters.strong} 
+                        variant="strong"
+                        activeChapter={activeChapterFilter}
+                        onSelect={handleChapterSelect}
+                    />
                 </div>
             </div>
 

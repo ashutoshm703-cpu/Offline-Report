@@ -17,7 +17,7 @@ export interface QuestionDetail {
   marks: number;
   timeSpent: string;
   avgPeerTime: string;
-  chapter?: string; // Added chapter field
+  chapter?: string;
 }
 
 export interface ChapterStat {
@@ -35,12 +35,26 @@ export interface ChapterBuckets {
 }
 
 export interface QuestionBehavior {
-  fastIncorrect: number; // Count
-  fastIncorrectAvgTime: string; // New
-  slowIncorrect: number; // Count
-  slowIncorrectAvgTime: string; // New
-  unattemptedTimeWasted: string; // New: Replaces count with time string
+  fastIncorrect: number;
+  fastIncorrectAvgTime: string;
+  slowIncorrect: number;
+  slowIncorrectAvgTime: string;
+  unattemptedTimeWasted: string;
   insight: string;
+}
+
+export interface RankInfo {
+  rank: number;
+  total: number;
+}
+
+export interface SubjectRanks {
+  air: RankInfo;
+  state: RankInfo;
+  section: RankInfo;
+  batch: RankInfo;
+  program: RankInfo;
+  course: RankInfo;
 }
 
 export interface SubjectData {
@@ -48,13 +62,11 @@ export interface SubjectData {
   status: SubjectStatus;
   score: number;
   topperScore: number;
-  averageScore: number; // New
-  subjectAir: number; // New
-  percentile: number; // New
+  averageScore: number;
+  percentile: number;
   totalMarks: number;
-  accuracy: number; // Percentage
-  batchRank: number;
-  totalBatchStudents: number;
+  accuracy: number;
+  ranks: SubjectRanks; // New structured rank data
   timeSpent: string;
   timeBreakdown: {
       correct: string;
@@ -63,7 +75,7 @@ export interface SubjectData {
   };
   summaryInsight: string;
   chapters: ChapterBuckets;
-  questionBehavior?: QuestionBehavior; // Optional, usually for weak subjects
+  questionBehavior?: QuestionBehavior;
   questions: QuestionDetail[];
 }
 
@@ -75,7 +87,7 @@ export interface DifficultyLevel {
 }
 
 export interface TestResultData {
-  isOffline?: boolean; // Added for Offline Test Support
+  isOffline?: boolean;
   meta: {
     testName: string;
     date: string;
@@ -129,7 +141,7 @@ export interface TestResultData {
   benchmarking: {
     lowest: number;
     highest: number;
-    average: number; // New
+    average: number;
     user: number;
   };
   finalSummary: string[];
