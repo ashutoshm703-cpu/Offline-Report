@@ -93,10 +93,7 @@ export const TEST_DATA: TestResultData = {
         improve: [
             { name: "Ecology", total: 10, correct: 4, incorrect: 6, unattempted: 0 },
             { name: "Biotech", total: 8, correct: 3, incorrect: 4, unattempted: 1 },
-            { name: "Reproduction", total: 12, correct: 5, incorrect: 5, unattempted: 2 },
-            { name: "Animal Kingdom", total: 8, correct: 3, incorrect: 4, unattempted: 1 },
-            { name: "Morphology", total: 9, correct: 4, incorrect: 5, unattempted: 0 },
-            { name: "Cell Cycle", total: 7, correct: 2, incorrect: 4, unattempted: 1 }
+            { name: "Reproduction", total: 12, correct: 5, incorrect: 5, unattempted: 2 }
         ]
       },
       questionBehavior: {
