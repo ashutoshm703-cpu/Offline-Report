@@ -108,11 +108,11 @@ export const TEST_DATA: TestResultData = {
         insight: "8 errors were made in under 15s each (rushed). Conversely, 2m was spent on questions left unattempted."
       },
       questions: [
-        { id: 1, result: Status.Correct, marks: 4, timeSpent: "30s", avgPeerTime: "45s", chapter: "Human Physiology" },
-        { id: 2, result: Status.Incorrect, marks: -1, timeSpent: "12s", avgPeerTime: "40s", chapter: "Ecology" },
-        { id: 3, result: Status.Correct, marks: 4, timeSpent: "55s", avgPeerTime: "50s", chapter: "Genetics" },
-        { id: 4, result: Status.Incorrect, marks: -1, timeSpent: "15s", avgPeerTime: "60s", chapter: "Biotech" },
-        { id: 5, result: Status.Unattempted, marks: 0, timeSpent: "5s", avgPeerTime: "70s", chapter: "Reproduction" },
+        { id: 1, result: Status.Correct, marks: 4, timeSpent: "30s", avgPeerTime: "45s", chapter: "Human Physiology", type: "Single Correct MCQ" },
+        { id: 2, result: Status.Incorrect, marks: -1, timeSpent: "12s", avgPeerTime: "40s", chapter: "Ecology", type: "Single Correct MCQ" },
+        { id: 3, result: Status.Correct, marks: 4, timeSpent: "55s", avgPeerTime: "50s", chapter: "Genetics", type: "Numerical Value" },
+        { id: 4, result: Status.Incorrect, marks: -1, timeSpent: "15s", avgPeerTime: "60s", chapter: "Biotech", type: "Single Correct MCQ" },
+        { id: 5, result: Status.Unattempted, marks: 0, timeSpent: "5s", avgPeerTime: "70s", chapter: "Reproduction", type: "Numerical Value" },
       ]
     },
     {
@@ -162,9 +162,9 @@ export const TEST_DATA: TestResultData = {
         insight: "Critical Issue: 40 mins spent on incorrect answers. 10 questions took >3m each resulting in negative marks."
       },
       questions: [
-        { id: 46, result: Status.Correct, marks: 4, timeSpent: "2m", avgPeerTime: "1.5m", chapter: "Kinematics" },
-        { id: 47, result: Status.Incorrect, marks: -1, timeSpent: "4m", avgPeerTime: "2m", chapter: "Rotation" },
-        { id: 48, result: Status.Unattempted, marks: 0, timeSpent: "0s", avgPeerTime: "1m", chapter: "Thermodynamics" },
+        { id: 46, result: Status.Correct, marks: 4, timeSpent: "2m", avgPeerTime: "1.5m", chapter: "Kinematics", type: "Numerical Value" },
+        { id: 47, result: Status.Incorrect, marks: -1, timeSpent: "4m", avgPeerTime: "2m", chapter: "Rotation", type: "Single Correct MCQ" },
+        { id: 48, result: Status.Unattempted, marks: 0, timeSpent: "0s", avgPeerTime: "1m", chapter: "Thermodynamics", type: "Numerical Value" },
       ]
     },
     {
@@ -213,8 +213,8 @@ export const TEST_DATA: TestResultData = {
         insight: "Very efficient. The 3m spent on unattempted questions could have been used to review the P-Block error."
       },
       questions: [
-        { id: 91, result: Status.Correct, marks: 4, timeSpent: "45s", avgPeerTime: "1m", chapter: "Organic Chemistry" },
-        { id: 92, result: Status.Correct, marks: 4, timeSpent: "30s", avgPeerTime: "45s", chapter: "Solutions" },
+        { id: 91, result: Status.Correct, marks: 4, timeSpent: "45s", avgPeerTime: "1m", chapter: "Organic Chemistry", type: "Single Correct MCQ" },
+        { id: 92, result: Status.Correct, marks: 4, timeSpent: "30s", avgPeerTime: "45s", chapter: "Solutions", type: "Numerical Value" },
       ]
     }
   ],

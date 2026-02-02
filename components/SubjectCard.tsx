@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { SubjectData, SubjectStatus, Status, ChapterStat } from '../types';
+import { SubjectData, SubjectStatus, Status, ChapterStat, QuestionDetail } from '../types';
 
 interface ChapterPosterProps {
     chapter: ChapterStat;
@@ -7,6 +7,206 @@ interface ChapterPosterProps {
     isActive: boolean;
     onSelect: (name: string) => void;
 }
+
+// Helper to parse time string "1h 30m 10s" to seconds
+const parseTimeStringToSeconds = (timeStr: string): number => {
+    if (!timeStr) return 0;
+    
+    let totalSeconds = 0;
+    const h = timeStr.match(/(\d+)h/);
+    const m = timeStr.match(/(\d+)m/);
+    const s = timeStr.match(/(\d+)s/);
+    
+    if (h) totalSeconds += parseInt(h[1]) * 3600;
+    if (m) totalSeconds += parseInt(m[1]) * 60;
+    if (s) totalSeconds += parseInt(s[1]);
+    
+    return totalSeconds;
+};
+
+// Helper to format seconds back to "1m 30s"
+const formatSecondsToTime = (seconds: number): string => {
+    if (seconds === 0) return "0s";
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = Math.floor(seconds % 60);
+    
+    const parts = [];
+    if (h > 0) parts.push(`${h}h`);
+    if (m > 0) parts.push(`${m}m`);
+    if (s > 0 || (h === 0 && m === 0)) parts.push(`${s}s`);
+    
+    return parts.join(' ');
+};
+
+interface QuestionTypeStat {
+  typeName: string;
+  total: number;
+  correct: number;
+  incorrect: number;
+  unattempted: number;
+  score: number;
+  totalMarks: number;
+  negativeMarks: number;
+  timeSpent: number;
+  avgTime: number;
+}
+
+const DonutChart = ({ 
+    correct, 
+    incorrect, 
+    unattempted, 
+    total 
+}: { 
+    correct: number; 
+    incorrect: number; 
+    unattempted: number; 
+    total: number 
+}) => {
+    const size = 64;
+    const strokeWidth = 8;
+    const center = size / 2;
+    const radius = (size - strokeWidth) / 2;
+    const circumference = 2 * Math.PI * radius;
+
+    const correctOffset = circumference - ((correct / total) * circumference);
+    const incorrectOffset = circumference - ((incorrect / total) * circumference);
+    // Unattempted is the base circle, so we layer Correct and Incorrect on top.
+
+    // Calculate rotation for the second segment (Incorrect) so it starts where Correct ends
+    const correctAngle = (correct / total) * 360;
+
+    return (
+        <div className="relative size-16 flex-shrink-0">
+             <svg className="size-full -rotate-90" viewBox={`0 0 ${size} ${size}`}>
+                {/* 1. Base Track (Unattempted Color - Gray) */}
+                <circle 
+                    cx={center} cy={center} r={radius} 
+                    fill="transparent" 
+                    stroke="#E2E8F0" 
+                    strokeWidth={strokeWidth} 
+                />
+                
+                {/* 2. Incorrect Segment (Red) */}
+                {incorrect > 0 && (
+                     <circle 
+                        cx={center} cy={center} r={radius} 
+                        fill="transparent" 
+                        stroke="#EB5757" 
+                        strokeWidth={strokeWidth} 
+                        strokeDasharray={circumference}
+                        strokeDashoffset={incorrectOffset}
+                        strokeLinecap="round"
+                        transform={`rotate(${correctAngle} ${center} ${center})`}
+                        className="transition-all duration-500 ease-out"
+                    />
+                )}
+
+                {/* 3. Correct Segment (Green) - Drawn First (visually looks like it starts at 12 o'clock) */}
+                {correct > 0 && (
+                    <circle 
+                        cx={center} cy={center} r={radius} 
+                        fill="transparent" 
+                        stroke="#219653" 
+                        strokeWidth={strokeWidth} 
+                        strokeDasharray={circumference}
+                        strokeDashoffset={correctOffset}
+                        strokeLinecap="round"
+                        className="transition-all duration-500 ease-out"
+                    />
+                )}
+             </svg>
+             <div className="absolute inset-0 flex flex-col items-center justify-center">
+                 <span className="text-sm font-bold text-slate-700 leading-none">{total}</span>
+                 <span className="text-[7px] font-bold text-slate-400 uppercase mt-0.5">Qs</span>
+             </div>
+        </div>
+    );
+}
+
+const QuestionTypeCard: React.FC<{ stat: QuestionTypeStat, isOffline: boolean }> = ({ stat, isOffline }) => {
+    return (
+        <div className="bg-white rounded-xl border border-slate-200 mb-3 shadow-sm relative overflow-hidden flex flex-col">
+            <div className="p-4 flex flex-row gap-2">
+                {/* Left Zone: Metrics */}
+                <div className="flex-1 flex flex-col justify-between">
+                    <div>
+                        <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-wide leading-tight pr-2">
+                            {stat.typeName}
+                        </h4>
+                        
+                        {/* Hero Score Section */}
+                        <div className="mt-3 flex flex-col items-start">
+                             <div className="flex items-baseline gap-2">
+                                <span className={`text-3xl font-black tracking-tight ${stat.score >= 0 ? 'text-slate-800' : 'text-red-600'}`}>
+                                    {stat.score}
+                                </span>
+                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Net Marks</span>
+                             </div>
+                             
+                             {/* Negative Marks Warning */}
+                             <div className="flex items-center gap-1.5 mt-0.5">
+                                 <span className={`text-[11px] font-bold ${stat.negativeMarks < 0 ? 'text-ref-red' : 'text-slate-300'}`}>
+                                    {stat.negativeMarks} Neg. Marks
+                                 </span>
+                             </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Right Zone: Visuals */}
+                <div className="w-32 pl-4 border-l border-slate-50 flex flex-col items-center justify-center gap-3">
+                     <DonutChart 
+                        correct={stat.correct}
+                        incorrect={stat.incorrect}
+                        unattempted={stat.unattempted}
+                        total={stat.total}
+                     />
+
+                     {/* Legend */}
+                     <div className="flex flex-col gap-1.5 w-full pl-2">
+                         <div className="flex items-center justify-between w-full text-[10px]">
+                             <div className="flex items-center gap-1.5">
+                                 <div className="size-1.5 rounded-full bg-ref-green"></div>
+                                 <span className="font-medium text-slate-500">Correct</span>
+                             </div>
+                             <span className="font-bold text-slate-700">{stat.correct}</span>
+                         </div>
+                         <div className="flex items-center justify-between w-full text-[10px]">
+                             <div className="flex items-center gap-1.5">
+                                 <div className="size-1.5 rounded-full bg-ref-red"></div>
+                                 <span className="font-medium text-slate-500">Wrong</span>
+                             </div>
+                             <span className="font-bold text-slate-700">{stat.incorrect}</span>
+                         </div>
+                         <div className="flex items-center justify-between w-full text-[10px]">
+                             <div className="flex items-center gap-1.5">
+                                 <div className="size-1.5 rounded-full bg-slate-300"></div>
+                                 <span className="font-medium text-slate-400">Unatt.</span>
+                             </div>
+                             <span className="font-bold text-slate-500">{stat.unattempted}</span>
+                         </div>
+                     </div>
+                </div>
+            </div>
+
+            {/* Efficiency Footer (Only if Online) */}
+            {!isOffline && (
+                <div className="bg-slate-50 border-t border-slate-100 px-4 py-2 flex items-center justify-between">
+                     <div className="flex items-center gap-2">
+                        <span className="material-symbols-outlined text-[14px] text-slate-400">schedule</span>
+                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Total: {formatSecondsToTime(stat.timeSpent)}</span>
+                     </div>
+                     <div className="flex items-center gap-2">
+                        <span className="material-symbols-outlined text-[14px] text-slate-400">speed</span>
+                        <span className="text-[10px] font-bold text-slate-700 uppercase tracking-wide">Avg: {formatSecondsToTime(Math.round(stat.avgTime))}/Q</span>
+                     </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
 
 // Compact Poster Component for Netflix-style Swimlanes
 const ChapterPoster: React.FC<ChapterPosterProps> = ({ 
@@ -250,7 +450,8 @@ export const SubjectCard: React.FC<SubjectCardProps> = ({ subject, isOffline = f
   const [showQuestionTable, setShowQuestionTable] = useState(false);
   const [activeFilter, setActiveFilter] = useState<'All' | Status>('All');
   const [activeChapterFilter, setActiveChapterFilter] = useState<string | null>(null);
-  
+  const [viewMode, setViewMode] = useState<'chapters' | 'types'>('chapters');
+
   // Ref for auto-scrolling to table
   const tableContainerRef = useRef<HTMLDivElement>(null);
 
@@ -292,14 +493,6 @@ export const SubjectCard: React.FC<SubjectCardProps> = ({ subject, isOffline = f
           case Status.Unattempted: return 'bg-ref-gray text-slate-500';
           default: return 'bg-slate-200';
       }
-  };
-
-  const getResultIcon = (result: Status) => {
-    switch(result) {
-      case Status.Correct: return 'check_circle';
-      case Status.Incorrect: return 'close';
-      default: return 'remove';
-    }
   };
 
   const filteredQuestions = subject.questions.filter(q => {
@@ -349,6 +542,11 @@ export const SubjectCard: React.FC<SubjectCardProps> = ({ subject, isOffline = f
   // Attempt Rate Calc
   const attemptedCount = displayCounts.total - displayCounts.unattempted;
   const attemptRate = displayCounts.total > 0 ? Math.round((attemptedCount / displayCounts.total) * 100) : 0;
+  
+  // Time per Q calc for stats
+  const correctAvgTime = displayCounts.correct > 0 ? Math.round(parseTimeStringToSeconds(subject.timeBreakdown.correct) / displayCounts.correct) : 0;
+  const incorrectAvgTime = displayCounts.incorrect > 0 ? Math.round(parseTimeStringToSeconds(subject.timeBreakdown.incorrect) / displayCounts.incorrect) : 0;
+  const unattemptedAvgTime = displayCounts.unattempted > 0 ? Math.round(parseTimeStringToSeconds(subject.timeBreakdown.unattempted) / displayCounts.unattempted) : 0;
 
   const handleChapterSelect = (chapterName: string) => {
       if (activeChapterFilter === chapterName) {
@@ -379,6 +577,47 @@ export const SubjectCard: React.FC<SubjectCardProps> = ({ subject, isOffline = f
      );
   };
 
+  // CALCULATE QUESTION TYPE STATS
+  const questionTypeStats: QuestionTypeStat[] = React.useMemo(() => {
+      const stats: Record<string, QuestionTypeStat> = {};
+      
+      subject.questions.forEach(q => {
+          const type = q.type || 'Unknown Type';
+          if (!stats[type]) {
+              stats[type] = {
+                  typeName: type,
+                  total: 0,
+                  correct: 0,
+                  incorrect: 0,
+                  unattempted: 0,
+                  score: 0,
+                  totalMarks: 0,
+                  negativeMarks: 0,
+                  timeSpent: 0,
+                  avgTime: 0
+              };
+          }
+          
+          stats[type].total++;
+          if (q.result === Status.Correct) stats[type].correct++;
+          if (q.result === Status.Incorrect) stats[type].incorrect++;
+          if (q.result === Status.Unattempted) stats[type].unattempted++;
+          
+          stats[type].score += q.marks;
+          stats[type].totalMarks += 4; // Assuming 4 marks per question for now
+          
+          if (q.marks < 0) stats[type].negativeMarks += q.marks;
+          
+          stats[type].timeSpent += parseTimeStringToSeconds(q.timeSpent);
+      });
+      
+      return Object.values(stats).map(s => ({
+          ...s,
+          avgTime: s.total > 0 ? s.timeSpent / s.total : 0
+      }));
+  }, [subject.questions]);
+
+
   return (
     <div 
         className="bg-white rounded-xl border border-slate-100 shadow-soft overflow-visible transition-all duration-300 my-1"
@@ -395,7 +634,7 @@ export const SubjectCard: React.FC<SubjectCardProps> = ({ subject, isOffline = f
                 </div>
              </div>
 
-             {/* Right: Diagnostics Grid (Zone B) - AIR | Accuracy | Time */}
+             {/* Right: Diagnostics Grid (Zone B) - AIR | Accuracy - Time REMOVED from here */}
              <div className="flex items-center gap-3 mb-1.5">
                 {/* AIR (Priority 1) */}
                 <div className="flex flex-col items-end">
@@ -414,17 +653,6 @@ export const SubjectCard: React.FC<SubjectCardProps> = ({ subject, isOffline = f
                       {Math.round(subject.accuracy)}%
                    </span>
                 </div>
-
-                {/* Time (Conditional) */}
-                {!isOffline && (
-                   <>
-                    <div className="w-px h-8 bg-slate-100"></div>
-                    <div className="flex flex-col items-end">
-                       <span className="text-[10px] font-bold text-slate-400 tracking-wider">TIME</span>
-                       <span className="text-lg font-bold text-slate-700">{subject.timeSpent}</span>
-                    </div>
-                   </>
-                )}
              </div>
         </div>
       </div>
@@ -472,8 +700,8 @@ export const SubjectCard: React.FC<SubjectCardProps> = ({ subject, isOffline = f
       <div className="grid grid-rows-[1fr]">
         <div className="overflow-hidden min-h-0 bg-white border-t border-slate-50">
             
-            {/* 1. CONTEXT BAR (3 Columns) */}
-            <div className="grid grid-cols-3 divide-x divide-slate-50 border-b border-slate-50 bg-white py-1">
+            {/* 1. CONTEXT BAR (4 Columns now, Time Added) */}
+            <div className={`grid ${isOffline ? 'grid-cols-3' : 'grid-cols-4'} divide-x divide-slate-50 border-b border-slate-50 bg-white py-1`}>
                  <div className="p-3 text-center">
                     <p className="text-[9px] uppercase text-slate-400 font-bold mb-1 tracking-wide">Top Score</p>
                     <p className="text-sm font-bold text-slate-700">{subject.topperScore}</p>
@@ -485,12 +713,19 @@ export const SubjectCard: React.FC<SubjectCardProps> = ({ subject, isOffline = f
                  <div className="p-3 text-center">
                     <p className="text-[9px] uppercase text-slate-400 font-bold mb-1 tracking-wide">Attempt</p>
                     <p className="text-sm font-bold text-slate-700">
-                        {attemptRate}% <span className="text-[10px] text-slate-400 font-medium ml-0.5">({attemptedCount}/{displayCounts.total})</span>
+                        {attemptRate}%
                     </p>
                  </div>
+                 {/* New Time Column (Only for Online) */}
+                 {!isOffline && (
+                    <div className="p-3 text-center">
+                        <p className="text-[9px] uppercase text-slate-400 font-bold mb-1 tracking-wide">Time</p>
+                        <p className="text-sm font-bold text-slate-700">{subject.timeSpent}</p>
+                    </div>
+                 )}
             </div>
 
-            {/* 2. ATTEMPT & TIME DISTRIBUTION */}
+            {/* 2. ATTEMPT & TIME DISTRIBUTION - MATCHED TO SCREENSHOT */}
             <div className="p-5">
                 <div className="flex justify-between items-center mb-4">
                     <p className="text-[10px] uppercase text-slate-400 font-bold flex items-center gap-1.5 tracking-wider">
@@ -498,94 +733,147 @@ export const SubjectCard: React.FC<SubjectCardProps> = ({ subject, isOffline = f
                         {isOffline ? 'Attempt' : 'Attempt & Time'}
                     </p>
                     <span className="text-[11px] font-bold text-slate-500 bg-slate-50 px-3 py-1 rounded-full border border-slate-100">
-                        {displayCounts.total} Qs
+                        {displayCounts.total} Questions
                     </span>
                 </div>
                 
-                <div className="grid grid-cols-3 gap-2">
-                    {/* Correct Badge */}
-                    <div className="p-2 rounded-lg bg-[#F0FDF4] border border-emerald-100/60">
-                        <div className="flex items-center gap-1.5 mb-1">
-                            <span className="size-1.5 rounded-full bg-ref-green shrink-0"></span>
-                            <span className="text-[9px] font-bold text-green-700 uppercase tracking-wide truncate">Correct</span>
+                <div className="grid grid-cols-3 gap-3">
+                    {/* Correct Card */}
+                    <div className={`rounded-2xl bg-[#ecfdf5] p-3 flex flex-col ${isOffline ? 'justify-center gap-1' : 'justify-between h-36'} relative overflow-hidden border border-emerald-100/50`}>
+                        {/* Header: Number Left, Tag Below (Vertical Stack) */}
+                        <div className="flex flex-col items-start z-10 gap-0.5">
+                            <span className="text-3xl font-black text-slate-800 tracking-tight leading-none">{displayCounts.correct}</span>
+                            <span className="text-emerald-700 text-[9px] font-extrabold uppercase">Correct</span>
                         </div>
-                        <div className="flex items-baseline gap-1.5">
-                             <span className="text-base font-bold text-slate-800 leading-none">
-                                {displayCounts.correct}
-                                <span className="text-[10px] text-slate-500 font-medium ml-0.5">Qs</span>
-                             </span>
-                             {!isOffline && (
-                                <span className="text-[9px] font-medium text-emerald-600/80">{subject.timeBreakdown.correct}</span>
-                             )}
-                        </div>
+                        
+                        {!isOffline && (
+                            <div className="z-10 mt-auto flex flex-col gap-3">
+                                {/* Progress Bar */}
+                                <div className="w-full h-1.5 bg-emerald-200/50 rounded-full">
+                                    <div className="h-full bg-emerald-500 rounded-full transition-all duration-500" style={{ width: `${(displayCounts.correct / displayCounts.total) * 100}%` }}></div>
+                                </div>
+
+                                {/* Time Stack */}
+                                <div className="flex flex-col">
+                                        <span className="text-sm font-bold text-slate-800 leading-tight">{subject.timeBreakdown.correct}</span>
+                                        <span className="text-[10px] font-bold text-slate-400">{formatSecondsToTime(correctAvgTime)} / Q</span>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
-                    {/* Incorrect Badge */}
-                    <div className="p-2 rounded-lg bg-[#FEF2F2] border border-red-100/60">
-                        <div className="flex items-center gap-1.5 mb-1">
-                            <span className="size-1.5 rounded-full bg-ref-red shrink-0"></span>
-                            <span className="text-[9px] font-bold text-red-700 uppercase tracking-wide truncate">Incorrect</span>
+                    {/* Incorrect Card */}
+                    <div className={`rounded-2xl bg-[#fff1f2] p-3 flex flex-col ${isOffline ? 'justify-center gap-1' : 'justify-between h-36'} relative overflow-hidden border border-rose-100/50`}>
+                        <div className="flex flex-col items-start z-10 gap-0.5">
+                            <span className="text-3xl font-black text-slate-800 tracking-tight leading-none">{displayCounts.incorrect}</span>
+                            <span className="text-rose-700 text-[9px] font-extrabold uppercase">Incorrect</span>
                         </div>
-                        <div className="flex items-baseline gap-1.5">
-                             <span className="text-base font-bold text-slate-800 leading-none">
-                                {displayCounts.incorrect}
-                                <span className="text-[10px] text-slate-500 font-medium ml-0.5">Qs</span>
-                             </span>
-                             {!isOffline && (
-                                <span className="text-[9px] font-medium text-red-600/80">{subject.timeBreakdown.incorrect}</span>
-                             )}
-                        </div>
+                        
+                        {!isOffline && (
+                            <div className="z-10 mt-auto flex flex-col gap-3">
+                                <div className="w-full h-1.5 bg-rose-200/50 rounded-full">
+                                    <div className="h-full bg-ref-red rounded-full transition-all duration-500" style={{ width: `${(displayCounts.incorrect / displayCounts.total) * 100}%` }}></div>
+                                </div>
+
+                                <div className="flex flex-col">
+                                        <span className="text-sm font-bold text-slate-800 leading-tight">{subject.timeBreakdown.incorrect}</span>
+                                        <span className="text-[10px] font-bold text-slate-400">{formatSecondsToTime(incorrectAvgTime)} / Q</span>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
-                    {/* Unattempted Badge */}
-                    <div className="p-2 rounded-lg bg-slate-50 border border-slate-200/60">
-                        <div className="flex items-center gap-1.5 mb-1">
-                            <span className="size-1.5 rounded-full bg-slate-400 shrink-0"></span>
-                            <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wide truncate">Unattempted</span>
+                    {/* Unattempted Card */}
+                    <div className={`rounded-2xl bg-[#f8fafc] p-3 flex flex-col ${isOffline ? 'justify-center gap-1' : 'justify-between h-36'} relative overflow-hidden border border-slate-100`}>
+                        <div className="flex flex-col items-start z-10 gap-0.5">
+                            <span className="text-3xl font-black text-slate-800 tracking-tight leading-none">{displayCounts.unattempted}</span>
+                            <span className="text-slate-500 text-[9px] font-extrabold uppercase">Unattempted</span>
                         </div>
-                        <div className="flex items-baseline gap-1.5">
-                             <span className="text-base font-bold text-slate-800 leading-none">
-                                {displayCounts.unattempted}
-                                <span className="text-[10px] text-slate-500 font-medium ml-0.5">Qs</span>
-                             </span>
-                             {!isOffline && (
-                                <span className="text-[9px] font-medium text-slate-400">{subject.timeBreakdown.unattempted}</span>
-                             )}
-                        </div>
+                        
+                        {!isOffline && (
+                            <div className="z-10 mt-auto flex flex-col gap-3">
+                                <div className="w-full h-1.5 bg-slate-200 rounded-full">
+                                    <div className="h-full bg-slate-400 rounded-full transition-all duration-500" style={{ width: `${(displayCounts.unattempted / displayCounts.total) * 100}%` }}></div>
+                                </div>
+
+                                <div className="flex flex-col">
+                                        <span className="text-sm font-bold text-slate-800 leading-tight">{subject.timeBreakdown.unattempted}</span>
+                                        <span className="text-[10px] font-bold text-slate-400">-</span>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
 
-            {/* 3. NEW CHAPTER INSIGHTS (Netflix Swimlanes) */}
+            {/* 3. NEW CHAPTER INSIGHTS (Netflix Swimlanes) OR QUESTION TYPE CARDS */}
             <div className="border-b border-dashed border-slate-200 bg-white pt-4 pb-2">
-                <h5 className="px-5 text-[11px] font-bold text-slate-700 mb-5 flex items-center gap-2 uppercase tracking-wider">
-                    <span className="material-symbols-outlined text-base text-primary">topic</span>
-                    Chapter Insights
-                </h5>
                 
-                <div className="flex flex-col gap-2">
-                    <SwimlaneRow 
-                        title="Critical Attention Needed" 
-                        chapters={subject.chapters.improve} 
-                        variant="improve"
-                        activeChapter={activeChapterFilter}
-                        onSelect={handleChapterSelect}
-                    />
-                    <SwimlaneRow 
-                        title="On the Edge" 
-                        chapters={subject.chapters.good} 
-                        variant="good"
-                        activeChapter={activeChapterFilter}
-                        onSelect={handleChapterSelect}
-                    />
-                    <SwimlaneRow 
-                        title="Mastered Topics" 
-                        chapters={subject.chapters.strong} 
-                        variant="strong"
-                        activeChapter={activeChapterFilter}
-                        onSelect={handleChapterSelect}
-                    />
+                {/* Header with Toggle */}
+                <div className="px-5 mb-5 flex justify-between items-center">
+                     <h5 className="text-[11px] font-bold text-slate-700 flex items-center gap-2 uppercase tracking-wider">
+                        <span className="material-symbols-outlined text-base text-primary">
+                            {viewMode === 'chapters' ? 'topic' : 'donut_large'}
+                        </span>
+                        Insights
+                    </h5>
+
+                    {/* Toggle Switch */}
+                    <div className="flex bg-slate-100 p-0.5 rounded-lg border border-slate-200">
+                        <button 
+                            onClick={() => setViewMode('chapters')}
+                            className={`px-3 py-1 rounded-md text-[10px] font-bold transition-all ${
+                                viewMode === 'chapters' 
+                                ? 'bg-white text-slate-800 shadow-sm' 
+                                : 'text-slate-400 hover:text-slate-600'
+                            }`}
+                        >
+                            Chapters
+                        </button>
+                        <button 
+                             onClick={() => setViewMode('types')}
+                             className={`px-3 py-1 rounded-md text-[10px] font-bold transition-all ${
+                                viewMode === 'types' 
+                                ? 'bg-white text-slate-800 shadow-sm' 
+                                : 'text-slate-400 hover:text-slate-600'
+                            }`}
+                        >
+                            Q-Types
+                        </button>
+                    </div>
                 </div>
+                
+                {viewMode === 'chapters' ? (
+                    <div className="flex flex-col gap-2">
+                        <SwimlaneRow 
+                            title="Critical Attention Needed" 
+                            chapters={subject.chapters.improve} 
+                            variant="improve"
+                            activeChapter={activeChapterFilter}
+                            onSelect={handleChapterSelect}
+                        />
+                        <SwimlaneRow 
+                            title="On the Edge" 
+                            chapters={subject.chapters.good} 
+                            variant="good"
+                            activeChapter={activeChapterFilter}
+                            onSelect={handleChapterSelect}
+                        />
+                        <SwimlaneRow 
+                            title="Mastered Topics" 
+                            chapters={subject.chapters.strong} 
+                            variant="strong"
+                            activeChapter={activeChapterFilter}
+                            onSelect={handleChapterSelect}
+                        />
+                    </div>
+                ) : (
+                    <div className="px-5 flex flex-col gap-1 pb-4">
+                        {questionTypeStats.map((stat) => (
+                            <QuestionTypeCard key={stat.typeName} stat={stat} isOffline={isOffline} />
+                        ))}
+                    </div>
+                )}
             </div>
 
             {/* 4. Behavior Analysis - Hidden in Offline Mode */}
@@ -750,10 +1038,17 @@ export const SubjectCard: React.FC<SubjectCardProps> = ({ subject, isOffline = f
                                         <th className="p-3">Chapter</th>
                                         <th className="p-3 text-center">Status</th>
                                         <th className="p-3 text-right">Marks</th>
+                                        {!isOffline && <th className="p-3 text-right">Time (vs Peer)</th>}
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-50">
-                                    {filteredQuestions.map((q) => (
+                                    {filteredQuestions.map((q) => {
+                                        // Simple comparison logic for time coloring
+                                        const myTimeSec = parseTimeStringToSeconds(q.timeSpent);
+                                        const peerTimeSec = parseTimeStringToSeconds(q.avgPeerTime);
+                                        const isSlow = myTimeSec > (peerTimeSec * 1.5);
+
+                                        return (
                                         <tr key={q.id} className="hover:bg-slate-50/80 transition-colors group relative cursor-pointer border-b border-slate-50 last:border-0">
                                             {/* Q# Column with Side Tooltip */}
                                             <td className="p-3 w-16 relative">
@@ -793,11 +1088,25 @@ export const SubjectCard: React.FC<SubjectCardProps> = ({ subject, isOffline = f
                                                     q.marks > 0 ? 'text-emerald-600' : 
                                                     q.marks < 0 ? 'text-red-500' : 'text-slate-400'
                                                 }`}>
-                                                    {q.marks > 0 ? `+${q.marks}` : q.marks}
+                                                    {q.marks}
                                                 </span>
                                             </td>
+
+                                            {/* Time Column (Online Only) */}
+                                            {!isOffline && (
+                                                <td className="p-3 text-right">
+                                                    <div className="flex flex-col items-end">
+                                                        <span className={`font-bold text-xs ${isSlow ? 'text-amber-600' : 'text-slate-700'}`}>
+                                                            {q.timeSpent}
+                                                        </span>
+                                                        <span className="text-[9px] text-slate-400">
+                                                            vs {q.avgPeerTime}
+                                                        </span>
+                                                    </div>
+                                                </td>
+                                            )}
                                         </tr>
-                                    ))}
+                                    )})}
                                 </tbody>
                             </table>
                         </div>

@@ -18,6 +18,7 @@ export interface QuestionDetail {
   timeSpent: string;
   avgPeerTime: string;
   chapter?: string;
+  type?: string; // New field for Question Type Analysis
 }
 
 export interface ChapterStat {

@@ -6,13 +6,14 @@ import { SubjectCard } from './components/SubjectCard';
 const App: React.FC = () => {
   const data = TEST_DATA;
   const [activeSubject, setActiveSubject] = useState(data.subjects[0].name);
+  const [isOfflineMode, setIsOfflineMode] = useState(data.isOffline);
 
   const activeSubjectData = data.subjects.find(s => s.name === activeSubject) || data.subjects[0];
 
   return (
     <div className="bg-background-light min-h-screen text-text-dark pb-12 font-sans selection:bg-blue-100">
       
-      {/* Sticky Header */}
+      {/* Sticky Header with Toggle */}
       <div className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-100 transition-colors">
         <div className="flex items-center justify-between px-4 py-3 max-w-md mx-auto">
             <div className="flex items-center gap-3">
@@ -21,9 +22,22 @@ const App: React.FC = () => {
                 </button>
                 <h2 className="text-slate-800 text-lg font-bold tracking-tight">Report</h2>
             </div>
-            <button className="text-primary hover:text-blue-700 text-sm font-semibold transition-colors">
-                View Solutions
-            </button>
+            
+            {/* Online/Offline Toggle */}
+            <div className="flex bg-slate-100 p-0.5 rounded-lg border border-slate-200">
+                <button 
+                    onClick={() => setIsOfflineMode(false)}
+                    className={`px-3 py-1.5 rounded-md text-[10px] font-bold transition-all ${!isOfflineMode ? 'bg-white text-primary shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                >
+                    Online
+                </button>
+                <button 
+                     onClick={() => setIsOfflineMode(true)}
+                     className={`px-3 py-1.5 rounded-md text-[10px] font-bold transition-all ${isOfflineMode ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                >
+                    Offline
+                </button>
+            </div>
         </div>
       </div>
 
@@ -32,7 +46,13 @@ const App: React.FC = () => {
         {/* Title Section */}
         <div>
             <h1 className="text-2xl font-bold text-slate-800">{data.meta.testName}</h1>
-            <p className="text-sm text-slate-500 mt-1">{data.meta.date} • Detailed analysis</p>
+            <div className="flex items-center gap-2 mt-1">
+                <span className="text-sm text-slate-500">{data.meta.date}</span>
+                <span className="text-slate-300">•</span>
+                <span className={`text-xs font-bold px-2 py-0.5 rounded ${isOfflineMode ? 'bg-slate-100 text-slate-500' : 'bg-green-50 text-green-700'}`}>
+                    {isOfflineMode ? 'Offline Exam' : 'CBT Mode'}
+                </span>
+            </div>
         </div>
 
         {/* Score Card with Integrated Benchmark & AIR */}
@@ -150,16 +170,16 @@ const App: React.FC = () => {
             <div className="flex items-center justify-between mb-6">
                 <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
                     <span className="material-symbols-outlined text-sm text-slate-500">
-                        {data.isOffline ? 'poll' : 'timelapse'}
+                        {isOfflineMode ? 'poll' : 'timelapse'}
                     </span>
-                    {data.isOffline ? 'Attempt' : 'Attempt & Time'}
+                    {isOfflineMode ? 'Attempt Analysis' : 'Attempt & Time'}
                 </h3>
                 
                 <div className="flex items-center gap-3">
                      <span className="text-[11px] font-bold text-slate-500 bg-slate-50 px-3 py-1 rounded-full border border-slate-100">
                         {data.usage.total} Qs
                     </span>
-                    {!data.isOffline && (
+                    {!isOfflineMode && (
                         <div className="flex items-baseline gap-1.5 pl-2 border-l border-slate-100">
                             <span className="text-sm font-bold text-slate-800">{data.time.totalUsed}</span>
                             <span className="text-xs text-slate-400 font-medium">/ {data.time.allowed}</span>
@@ -168,7 +188,7 @@ const App: React.FC = () => {
                 </div>
             </div>
 
-            {data.isOffline ? (
+            {isOfflineMode ? (
                 // Offline View: Compact Clean Row
                 <div className="flex flex-col gap-5 pt-2">
                     {/* 1. Visual Distribution Bar */}
@@ -342,7 +362,7 @@ const App: React.FC = () => {
             <SubjectCard 
                 key={activeSubject} 
                 subject={activeSubjectData} 
-                isOffline={data.isOffline} 
+                isOffline={isOfflineMode} 
             />
         </div>
 
