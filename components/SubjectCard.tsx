@@ -730,79 +730,112 @@ export const SubjectCard: React.FC<SubjectCardProps> = ({ subject, isOffline = f
                 <div className="flex justify-between items-center mb-4">
                     <p className="text-[10px] uppercase text-slate-400 font-bold flex items-center gap-1.5 tracking-wider">
                         <span className="material-symbols-outlined text-base text-slate-300">{isOffline ? 'poll' : 'schedule'}</span>
-                        {isOffline ? 'Attempt' : 'Attempt & Time'}
+                        {isOffline ? 'ATTEMPT' : 'Attempt & Time'}
                     </p>
                     <span className="text-[11px] font-bold text-slate-500 bg-slate-50 px-3 py-1 rounded-full border border-slate-100">
-                        {displayCounts.total} Questions
+                        {displayCounts.total} {isOffline ? 'Qs' : 'Questions'}
                     </span>
                 </div>
                 
                 <div className="grid grid-cols-3 gap-3">
                     {/* Correct Card */}
-                    <div className={`rounded-2xl bg-[#ecfdf5] p-3 flex flex-col ${isOffline ? 'justify-center gap-1' : 'justify-between h-36'} relative overflow-hidden border border-emerald-100/50`}>
-                        {/* Header: Number Left, Tag Below (Vertical Stack) */}
-                        <div className="flex flex-col items-start z-10 gap-0.5">
-                            <span className="text-3xl font-black text-slate-800 tracking-tight leading-none">{displayCounts.correct}</span>
-                            <span className="text-emerald-700 text-[9px] font-extrabold uppercase">Correct</span>
-                        </div>
-                        
-                        {!isOffline && (
-                            <div className="z-10 mt-auto flex flex-col gap-3">
-                                {/* Progress Bar */}
-                                <div className="w-full h-1.5 bg-emerald-200/50 rounded-full">
-                                    <div className="h-full bg-emerald-500 rounded-full transition-all duration-500" style={{ width: `${(displayCounts.correct / displayCounts.total) * 100}%` }}></div>
-                                </div>
-
-                                {/* Time Stack */}
-                                <div className="flex flex-col">
-                                        <span className="text-sm font-bold text-slate-800 leading-tight">{subject.timeBreakdown.correct}</span>
-                                        <span className="text-[10px] font-bold text-slate-400">{formatSecondsToTime(correctAvgTime)} / Q</span>
-                                </div>
+                    {isOffline ? (
+                        <div className="rounded-2xl p-4 flex flex-col gap-1 bg-[#ecfdf5] border border-emerald-100/50">
+                             <div className="flex items-center gap-2 mb-2">
+                                <div className="size-2 rounded-full bg-emerald-500"></div>
+                                <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider">CORRECT</span>
                             </div>
-                        )}
-                    </div>
+                            <div className="flex items-baseline gap-1">
+                                 <span className="text-3xl font-black text-slate-800 tracking-tight">{displayCounts.correct}</span>
+                                 <span className="text-[11px] font-bold text-slate-400">Qs</span>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="rounded-2xl p-3 flex flex-col justify-between h-36 relative overflow-hidden bg-[#ecfdf5] border border-emerald-100/50">
+                             {/* Existing Online Layout */}
+                             <div className="flex flex-col items-start z-10 gap-0.5">
+                                <span className="text-3xl font-black text-slate-800 tracking-tight leading-none">{displayCounts.correct}</span>
+                                <span className="text-emerald-700 text-[9px] font-extrabold uppercase">Correct</span>
+                            </div>
+                            
+                            <div className="z-10 mt-auto flex flex-col gap-3">
+                                 {/* Progress Bar */}
+                                 <div className="w-full h-1.5 bg-emerald-200/50 rounded-full">
+                                     <div className="h-full bg-emerald-500 rounded-full transition-all duration-500" style={{ width: `${(displayCounts.correct / displayCounts.total) * 100}%` }}></div>
+                                 </div>
+
+                                 {/* Time Stack */}
+                                 <div className="flex flex-col">
+                                      <span className="text-sm font-bold text-slate-800 leading-tight">{subject.timeBreakdown.correct}</span>
+                                      <span className="text-[10px] font-bold text-slate-400">{formatSecondsToTime(correctAvgTime)} / Q</span>
+                                 </div>
+                            </div>
+                        </div>
+                    )}
 
                     {/* Incorrect Card */}
-                    <div className={`rounded-2xl bg-[#fff1f2] p-3 flex flex-col ${isOffline ? 'justify-center gap-1' : 'justify-between h-36'} relative overflow-hidden border border-rose-100/50`}>
-                        <div className="flex flex-col items-start z-10 gap-0.5">
-                            <span className="text-3xl font-black text-slate-800 tracking-tight leading-none">{displayCounts.incorrect}</span>
-                            <span className="text-rose-700 text-[9px] font-extrabold uppercase">Incorrect</span>
-                        </div>
-                        
-                        {!isOffline && (
-                            <div className="z-10 mt-auto flex flex-col gap-3">
-                                <div className="w-full h-1.5 bg-rose-200/50 rounded-full">
-                                    <div className="h-full bg-ref-red rounded-full transition-all duration-500" style={{ width: `${(displayCounts.incorrect / displayCounts.total) * 100}%` }}></div>
-                                </div>
-
-                                <div className="flex flex-col">
-                                        <span className="text-sm font-bold text-slate-800 leading-tight">{subject.timeBreakdown.incorrect}</span>
-                                        <span className="text-[10px] font-bold text-slate-400">{formatSecondsToTime(incorrectAvgTime)} / Q</span>
-                                </div>
+                    {isOffline ? (
+                         <div className="rounded-2xl p-4 flex flex-col gap-1 bg-[#fff1f2] border border-rose-100/50">
+                            <div className="flex items-center gap-2 mb-2">
+                                <div className="size-2 rounded-full bg-red-500"></div>
+                                <span className="text-[10px] font-bold text-red-700 uppercase tracking-wider">INCORRECT</span>
                             </div>
-                        )}
-                    </div>
+                            <div className="flex items-baseline gap-1">
+                                 <span className="text-3xl font-black text-slate-800 tracking-tight">{displayCounts.incorrect}</span>
+                                 <span className="text-[11px] font-bold text-slate-400">Qs</span>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="rounded-2xl p-3 flex flex-col justify-between h-36 relative overflow-hidden bg-[#fff1f2] border border-rose-100/50">
+                            <div className="flex flex-col items-start z-10 gap-0.5">
+                                <span className="text-3xl font-black text-slate-800 tracking-tight leading-none">{displayCounts.incorrect}</span>
+                                <span className="text-rose-700 text-[9px] font-extrabold uppercase">Incorrect</span>
+                            </div>
+                            
+                            <div className="z-10 mt-auto flex flex-col gap-3">
+                                 <div className="w-full h-1.5 bg-rose-200/50 rounded-full">
+                                     <div className="h-full bg-ref-red rounded-full transition-all duration-500" style={{ width: `${(displayCounts.incorrect / displayCounts.total) * 100}%` }}></div>
+                                 </div>
+
+                                 <div className="flex flex-col">
+                                         <span className="text-sm font-bold text-slate-800 leading-tight">{subject.timeBreakdown.incorrect}</span>
+                                         <span className="text-[10px] font-bold text-slate-400">{formatSecondsToTime(incorrectAvgTime)} / Q</span>
+                                 </div>
+                            </div>
+                        </div>
+                    )}
 
                     {/* Unattempted Card */}
-                    <div className={`rounded-2xl bg-[#f8fafc] p-3 flex flex-col ${isOffline ? 'justify-center gap-1' : 'justify-between h-36'} relative overflow-hidden border border-slate-100`}>
-                        <div className="flex flex-col items-start z-10 gap-0.5">
-                            <span className="text-3xl font-black text-slate-800 tracking-tight leading-none">{displayCounts.unattempted}</span>
-                            <span className="text-slate-500 text-[9px] font-extrabold uppercase">Unattempted</span>
-                        </div>
-                        
-                        {!isOffline && (
-                            <div className="z-10 mt-auto flex flex-col gap-3">
-                                <div className="w-full h-1.5 bg-slate-200 rounded-full">
-                                    <div className="h-full bg-slate-400 rounded-full transition-all duration-500" style={{ width: `${(displayCounts.unattempted / displayCounts.total) * 100}%` }}></div>
-                                </div>
-
-                                <div className="flex flex-col">
-                                        <span className="text-sm font-bold text-slate-800 leading-tight">{subject.timeBreakdown.unattempted}</span>
-                                        <span className="text-[10px] font-bold text-slate-400">-</span>
-                                </div>
+                    {isOffline ? (
+                        <div className="rounded-2xl p-4 flex flex-col gap-1 bg-slate-50 border border-slate-100">
+                            <div className="flex items-center gap-2 mb-2">
+                                <div className="size-2 rounded-full bg-slate-400"></div>
+                                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">UNATTEMPTED</span>
                             </div>
-                        )}
-                    </div>
+                            <div className="flex items-baseline gap-1">
+                                 <span className="text-3xl font-black text-slate-800 tracking-tight">{displayCounts.unattempted}</span>
+                                 <span className="text-[11px] font-bold text-slate-400">Qs</span>
+                            </div>
+                        </div>
+                    ) : (
+                         <div className="rounded-2xl p-3 flex flex-col justify-between h-36 relative overflow-hidden bg-[#f8fafc] border border-slate-100">
+                            <div className="flex flex-col items-start z-10 gap-0.5">
+                                <span className="text-3xl font-black text-slate-800 tracking-tight leading-none">{displayCounts.unattempted}</span>
+                                <span className="text-slate-500 text-[9px] font-extrabold uppercase">Unattempted</span>
+                            </div>
+                            
+                            <div className="z-10 mt-auto flex flex-col gap-3">
+                                 <div className="w-full h-1.5 bg-slate-200 rounded-full">
+                                     <div className="h-full bg-slate-400 rounded-full transition-all duration-500" style={{ width: `${(displayCounts.unattempted / displayCounts.total) * 100}%` }}></div>
+                                 </div>
+
+                                 <div className="flex flex-col">
+                                         <span className="text-sm font-bold text-slate-800 leading-tight">{subject.timeBreakdown.unattempted}</span>
+                                         <span className="text-[10px] font-bold text-slate-400">-</span>
+                                 </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
 
